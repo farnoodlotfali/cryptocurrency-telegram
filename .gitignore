@@ -1,0 +1,12 @@
+.env
+.venv
+*.session
+*.session-journal
+__pycache__/
+migrations
+
+.venv/
+.tvenv/
+all_json
+all_csv
+historic-json

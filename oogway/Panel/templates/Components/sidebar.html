@@ -1,0 +1,102 @@
+{% load static %}
+{% load navigation_tags %}
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <!-- Brand Logo -->
+  <a class="brand-link" href="{% url 'Panel:home' %}">
+    <img
+      src="{% static 'dist/img/TradeMaster.png' %}"
+      alt="AdminLTE Logo"
+      class="brand-image img-circle elevation-3"
+      style="opacity: 0.8"
+    />
+    <span class="brand-text font-weight-light">Trade Master</span>
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul
+        class="nav nav-pills nav-sidebar flex-column"
+        data-widget="treeview"
+        role="menu"
+        data-accordion="false"
+      >
+        <li class="nav-item">
+          <a href="{% url 'Panel:home' %}" class="nav-link {% is_active 'Panel:home' %}">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+            <p>Dashboard
+            </p>
+          </a>
+         
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'Panel:channel_list' %}" class="nav-link {% is_active 'Panel:channel_list' %}">
+            <i class="nav-icon fas fa-th"></i>
+            <p>Channels</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'Panel:post_list' %}" class="nav-link {% is_active 'Panel:post_list' %}">
+            <i class="nav-icon fas fa-comment"></i>
+            <p>Posts</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'Panel:symbol' %}" class="nav-link {% is_active 'Panel:symbol' %}">
+            <i class="nav-icon fas fa-cube"></i>
+            <p>Symbol</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'Panel:market' %}" class="nav-link {% is_active 'Panel:market' %}">
+            <i class="nav-icon fas fa-shopping-cart"></i>
+            <p>Market</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'Panel:predict' %}" class="nav-link {% is_active 'Panel:predict' %}">
+            <i class="nav-icon fas fa-skull-crossbones"></i>
+            <p>Predict</p>
+          </a>
+        </li> 
+        <li class="nav-item">
+          <a href="{% url 'Panel:settings' %}" class="nav-link {% is_active 'Panel:settings' %}">
+            <i class="nav-icon fas fa-cog"></i>
+            <p>Settings</p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link {% is_active 'Panel:statistic' %}">
+            <i class="nav-icon fas fa-chart-bar"></i>
+            <p>Statistic/Backtest
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'Panel:statistic' %}" class="nav-link {% is_active 'Panel:statistic' %}">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Predicts</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="../index3.html" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Channels</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+    <!-- /.sidebar-menu -->
+  </div>
+  <!-- /.sidebar -->
+</aside>

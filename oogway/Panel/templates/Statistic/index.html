@@ -1,0 +1,1196 @@
+{% load static %}
+{% load navigation_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- <title>AdminLTE 3 | Validation Form</title> -->
+    <title>Statistic</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
+    />
+      <!-- Tempusdominus Bootstrap 4 -->
+      <link
+      rel="stylesheet"
+      href="{% static 'plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}"
+    />
+     <!-- Select2 -->
+    <link
+     rel="stylesheet"
+     href="{% static 'plugins/select2/css/select2.min.css' %}"
+    />
+    <!-- DataTables -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}"
+    />
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}" />
+  </head>
+  <body
+    class="hold-transition sidebar-mini layout-fixed dark-mode sidebar-collapse"
+  >
+    {% include 'Components/header.html' %}
+    <!-- sidebar -->
+    {% include 'Components/sidebar.html' %}
+    <div class="wrapper">
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper mt-2">
+        <section class="content">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card card-primary">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-filter mr-1"></i>
+                      Filter Statistic
+                    </h3>
+                  </div>
+                  <form id="quickForm" >
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-3 form-group">
+                          <label>From</label>
+                          <input
+                            type="date"
+                            class="form-control "
+                            value="{{query_filters.date__gte}}"
+                            name="dateFrom"
+                            id="dateFrom"
+                          />  
+                        
+                        </div> 
+                        <div class="col-3 form-group">
+                          <label>To</label>
+                          <input
+                          type="date"
+                          class="form-control "
+                          value="{{query_filters.date__lte}}"
+                          name="dateTo"
+                          id="dateTo"
+                     
+                        />
+                        </div>
+                        <div class="col-3 form-group">
+                          <label>Position Side</label>
+                          <div class="select2-purple">
+                            <select
+                              class="select2"
+                              data-placeholder="Select a Position"
+                              data-dropdown-css-class="select2-purple"
+                              style="width: 100%"
+                              name="position"
+                              id="position"
+                            >
+                              <option></option>
+                              {% for position in positions %}
+                                <option
+                                  value="{{position.name}}"
+                                  {% if query_filters.position__name == position.name %}selected="selected"{% endif %}
+                                >
+                                  {{position.name}}
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-3 form-group">
+                          <label>Channel</label>
+                          <div class="select2-purple">
+                            <select
+                              class="select2"
+                              data-placeholder="Select a Channel"
+                              data-dropdown-css-class="select2-purple"
+                              style="width: 100%"
+                              name="channel"
+                              id="channel"
+                            >
+                              <option></option>
+                              {% for channel in channels %}
+                                <option
+                                  value="{{channel.channel_id}}"
+                                  {% if query_filters.post__channel__channel_id == channel.channel_id %}selected="selected"{% endif %}
+                                >
+                                  {{channel.name}}
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-3 form-group">
+                          <label>Symbol</label>
+                          <div class="select2-orange">
+                            <select
+                              class="select2"
+                              data-placeholder="Select a Symbol"
+                              data-dropdown-css-class="select2-orange"
+                              style="width: 100%"
+                              name="symbol"
+                              id="symbol"
+                            >
+                              <option></option>
+                              {% for symbol in symbols %}
+                                <option
+                                  value="{{symbol.name}}"
+                                  {% if query_filters.symbol__name == symbol.name %}selected="selected"{% endif %}
+                                >
+                                  {{symbol.name}}
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                      <a href="{% url 'Panel:statistic' %}" class="btn btn-danger btn-outline px-5" >
+                        Reset
+                      </a>
+                      <button type="submit" class="btn btn-primary px-5">
+                        Submit
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="row">
+
+              <!-- Criteria (we assume FAILED WITH PROFIT is FAILED)  -->
+              <div class="col-md-12 ">
+                <div class="card card-warning ">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chess mr-1"></i>
+                      Criteria <small>(we assume FAILED WITH PROFIT is <strong class="text-danger">FAILED</strong>)</small>
+                    </h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="container-fluid">
+                      <div class="row">
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-info">
+                              <i class="fa fa-mountain"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Total Trade</span>
+                              <span class="info-box-number">{{ criteria.total }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="fa fa-arrow-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Win Count</span>
+                              <span class="info-box-number">{{ criteria.win_count }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-arrow-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Loss Count</span>
+                              <span class="info-box-number">{{ criteria.loss_count }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="fa fa-arrow-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Win Rate</span>
+                              <span class="info-box-number">{{ criteria.win_rate|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-arrow-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Loss Rate</span>
+                              <span class="info-box-number">{{ criteria.loss_rate|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="far fa-laugh"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Gross Profit</span>
+                              <span class="info-box-number">{{ criteria.gross_profit|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-sad-cry"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Gross Loss</span>
+                              <span class="info-box-number">{{ criteria.gross_loss|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="far fa-thumbs-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Average Win</span>
+                              <span class="info-box-number">{{ criteria.average_win|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="far fa-thumbs-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Average Loss</span>
+                              <span class="info-box-number">{{ criteria.average_loss|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-fuchsia">
+                              <i class="fa fa-blind"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Expectancy</span>
+                              <span class="info-box-number">{{ criteria.expectancy|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-green">
+                              <i class="fa fa-money-bill-wave"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Profit Factor</span>
+                              <span class="info-box-number">{{ criteria.profit_factor|abs_number|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-green">
+                              <i class="fa fa-money-bill-alt"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Payoff Ratio</span>
+                              <span class="info-box-number">{{ criteria.payoff_ratio|abs_number|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+              </div>
+
+              <!-- Criteria (we assume FAILED WITH PROFIT is SUCCESS)  -->
+              <div class="col-md-12 ">
+                <div class="card card-navy">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chess mr-1"></i>
+                      Criteria <small>(we assume FAILED WITH PROFIT is <strong class="text-lime" >SUCCESS</strong>)</small>
+                    </h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="container-fluid">
+                      <div class="row">
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-info">
+                              <i class="fa fa-mountain"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Total Trade</span>
+                              <span class="info-box-number">{{ criteria.total }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="fa fa-arrow-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Win Count</span>
+                              <span class="info-box-number">{{ criteria.win_count_just_success }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-arrow-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Loss Count</span>
+                              <span class="info-box-number">{{ criteria.loss_count_without_success }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="fa fa-arrow-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Win Rate</span>
+                              <span class="info-box-number">{{ criteria.win_rate_just_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-arrow-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Loss Rate</span>
+                              <span class="info-box-number">{{ criteria.loss_rate_without_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="far fa-laugh"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Gross Profit</span>
+                              <span class="info-box-number">{{ criteria.gross_profit_just_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="fa fa-sad-cry"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Gross Loss</span>
+                              <span class="info-box-number">{{ criteria.gross_loss_without_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-lime">
+                              <i class="far fa-thumbs-up"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Average Win</span>
+                              <span class="info-box-number">{{ criteria.average_win_just_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-red">
+                              <i class="far fa-thumbs-down"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Average Loss</span>
+                              <span class="info-box-number">{{ criteria.average_loss_without_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-fuchsia">
+                              <i class="fa fa-blind"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Expectancy</span>
+                              <span class="info-box-number">{{ criteria.expectancy_just_success|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-green">
+                              <i class="fa fa-money-bill-wave"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Profit Factor</span>
+                              <span class="info-box-number">{{ criteria.profit_factor_just_success|abs_number|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-green">
+                              <i class="fa fa-money-bill-alt"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Payoff Ratio</span>
+                              <span class="info-box-number">{{ criteria.payoff_ratio_just_success|abs_number|round_number:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+              </div>
+
+              <div class="col-md-12">
+                <div class="card card-success">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> Statistic Table</h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <table
+                      id="example1"
+                      class="table table-bordered table-striped"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">Status</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                          <th scope="col">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                        {% for item in results %}
+                          <tr>
+                            <th 
+                              class="{{ item.status__name|status_color }}"
+                            >
+                              <!-- name -->
+                              {{item.status__name}}
+                            </th>
+                            <th>
+                              <!-- profit-->
+                              {{item.total_profit}}
+                            </th>
+                            <th>
+                              <!-- count -->
+                              {{item.count}}
+                            </th>
+                          </tr>
+                        {% endfor %}
+
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="col">Status</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                          <th scope="col">Count</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+              
+                </div>
+
+              </div>
+
+              <div class="col-md-6">
+                <div class="card card-purple">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-pie mr-1"></i> Status Statistic(Count) Chart </h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <canvas
+                      id="pieChart"
+                      style="
+                        min-height: 250px;
+                        height: 250px;
+                        max-height: 250px;
+                        max-width: 100%;
+                      "
+                    ></canvas>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+              </div>
+              
+              <div class="col-md-6" >
+                <div class="card card-teal">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-pie mr-1"></i> Status Statistic(Profit) Chart </h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <canvas
+                      id="pieChart1"
+                      style="
+                        min-height: 250px;
+                        height: 250px;
+                        max-height: 250px;
+                        max-width: 100%;
+                      "
+                    ></canvas>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+              </div>
+
+              <div class="col-md-6" >
+                <div class="card card-success">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chess-bishop mr-1"></i>
+                      Profit Chart</h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart">
+                      <canvas
+                        id="barChart"
+                        style="
+                          min-height: 250px;
+                          height: 250px;
+                          max-height: 250px;
+                          max-width: 100%;
+                        "
+                      ></canvas>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+              </div>
+
+              <div class="col-md-6" >
+                <div class="card card-purple">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chess-knight mr-1"></i>
+                      Take-Profit Index Activation</h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <small class="text-muted">FWP_is_failed: We assume FAILED WITH PROFIT is Failed, So we remove predicts with status of FAILED WITH PROFIT and include SUCCESS status </small>
+                    <div class="chart">
+                      <canvas
+                        id="barChart1"
+                        style="
+                          min-height: 250px;
+                          height: 250px;
+                          max-height: 250px;
+                          max-width: 100%;
+                        "
+                      ></canvas>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+              </div>
+
+              <div class="col-md-12">
+                <div class="card card-orange  ">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> TP Table</h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <table
+                      id="example2"
+                      class="table table-bordered table-striped"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">TP index</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                          <th scope="col">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                        {% for item in tp_index_profits_array %}
+                          <tr>
+                            <th 
+                              class="{% if item.status__name == 'SUCCESS' %} text-lime {% elif item.status__name == 'FAILED' or  item.status__name == 'CANCELED' %} text-danger {% elif item.status__name == 'FULLTARGET' %} text-green  {% elif item.status__name == 'FAILED WITH PROFIT' %} text-orange {% elif item.status__name == 'PENDING' %} text-gray {% endif %}"
+                            >
+                              <!-- name -->
+                              {{item.name}}
+                            </th>
+                            <th>
+                              <!-- profit-->
+                              {{item.profit}}
+                            </th>
+                            <th>
+                              <!-- count -->
+                              {{item.count}}
+
+                            </th>
+                          </tr>
+                        {% endfor %}
+
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="col">TP index</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                          <th scope="col">Count</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+              
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- /.content -->
+      </div>
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Bootstrap Switch -->
+    <script src="{% static 'plugins/bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
+    <!-- AdminLTE App -->
+    <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="{% static 'dist/js/demo.js' %}"></script>
+    <!-- Page specific script -->
+    <!-- <script src="{% static 'plugins/moment/moment.min.js' %}"></script> -->
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="{% static 'plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js' %}"></script>
+    <!-- Select2 -->
+    <script src="{% static 'plugins/select2/js/select2.full.min.js' %}"></script>
+    <!-- ChartJS -->
+    <script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/jszip/jszip.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/pdfmake.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/vfs_fonts.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.print.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.colVis.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js" ></script>
+   <script>
+      $(document).ready(function () {
+        loadCriteriaChart(`/panel/chart/channel-criteria?dateFrom=${document.getElementById('dateFrom').value}&dateTo=${document.getElementById('dateTo').value}&position=${document.getElementById('position').value}&channel=${document.getElementById('channel').value}&symbol=${document.getElementById('symbol').value}`);
+        loadTpIndexChart(`/panel/chart/tp-index?dateFrom=${document.getElementById('dateFrom').value}&dateTo=${document.getElementById('dateTo').value}&position=${document.getElementById('position').value}&channel=${document.getElementById('channel').value}&symbol=${document.getElementById('symbol').value}`);
+      });
+      $(function () {
+        //Initialize Select2 Elements
+        $(".select2").select2();
+
+        //Initialize Select2 Elements
+        $(".select2bs4").select2({
+          theme: "bootstrap4",
+        });
+        //Date picker
+        $("#dateFrom").datetimepicker({
+          // defaultDate: "11/1/2013",
+          format: "L",
+        }); 
+        $("#dateTo").datetimepicker({
+          format: "L",
+        });
+      });
+      $(function () {
+        $("#example1")
+          .DataTable({
+            responsive: true,
+            lengthChange: false,
+            autoWidth: false,
+            buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            // search: {
+            //   search: "12",
+            // },
+            order: [[1, "desc"]],
+          })
+          .buttons()
+          .container()
+          .appendTo("#example1_wrapper .col-md-6:eq(0)");
+        $("#example2")
+          .DataTable({
+            responsive: true,
+            lengthChange: false,
+            autoWidth: false,
+            buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            // search: {
+            //   search: "12",
+            // },
+            order: [[2, "desc"]],
+          })
+          .buttons()
+          .container()
+          .appendTo("#example2_wrapper .col-md-6:eq(0)");
+      });
+
+
+      function loadCriteriaChart(endpoint) {
+        $.ajax({
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (jsonResponse) => {
+            const COLORS = {
+              'FAILED WITH PROFIT':"#fd7e14",
+              "PENDING":"#d2d6de",
+              "SUCCESS":"#0f0",
+              "FULLTARGET":"#00a65a",
+              "CANCELED":"#f00141",
+              "FAILED":"#f00",
+              "FAILED WITH PROFIT (JUST SUCCESS)":"#513b06",
+            }
+            
+            let labels = []
+            let profits = []
+            let counts = []
+            let colors = []
+
+            Object.entries(jsonResponse).forEach(([key,val])=>{
+              labels.push(key)
+              profits.push(val.total_profit)
+              counts.push(val.count)
+              colors.push(COLORS[key])
+            })
+
+          
+            var pieChartCanvas = $("#pieChart").get(0).getContext("2d");
+            var pieChartCanvas1 = $("#pieChart1").get(0).getContext("2d");
+            var pieData = {
+                labels: labels,
+                datasets: [
+                  {
+                    data: counts,
+                    backgroundColor: colors,
+                  },
+                ],
+            };
+            var pieData1 = {
+                labels: labels,
+                datasets: [
+                  {
+                    data: profits,
+                    backgroundColor: colors,
+                  },
+                ],
+            };
+            var pieOptions = {
+              maintainAspectRatio: false,
+              responsive: true,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              },
+              plugins: {
+                labels: {
+                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
+                  render: 'percentage',
+                  precision: 0,
+                  showZero: true,
+                  fontSize: 12,
+                  fontColor: '#fff',
+                  fontStyle: 'normal',
+                  textShadow: true,
+                  shadowBlur: 10,
+                  shadowOffsetX: -5,
+                  shadowOffsetY: 5,
+                  shadowColor: 'rgba(255,0,0,0.75)',
+                  // arc: true,
+                  position: 'default',
+                  overlap: true,
+                  showActualPercentages: true,
+                  textMargin: 4
+                }
+              }
+            };
+            //Create pie or douhnut chart
+            // You can switch between pie and douhnut using the method below.
+            new Chart(pieChartCanvas, {
+              type: "pie",
+              data: pieData,
+              options: pieOptions,
+            });  
+            new Chart(pieChartCanvas1, {
+              type: "pie",
+              data: pieData1,
+              options: pieOptions,
+            });
+
+            
+            var areaChartData = {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Profits",
+                  backgroundColor: "rgba(60,141,188,0.9)",
+                  borderColor: "rgba(60,141,188,0.8)",
+                  pointRadius: false,
+                  pointColor: "#3b8bba",
+                  pointStrokeColor: "rgba(60,141,188,1)",
+                  pointHighlightFill: "#fff",
+                  pointHighlightStroke: "rgba(60,141,188,1)",
+                  data: profits.map(l=> Number(l).toFixed(2)),
+                },
+              ],
+            };
+
+
+            var barChartCanvas = $("#barChart").get(0).getContext("2d");
+            var barChartData = $.extend(true, {}, areaChartData);
+            var temp0 = areaChartData.datasets[0];
+            barChartData.datasets[0] = temp0;
+
+            var barChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              datasetFill: false,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              }, 
+              plugins: {
+                labels: {
+                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
+                  render: 'value',
+                  showZero: true,
+                  fontSize: 12,
+                  fontColor: '#fff',
+                }
+              },
+              scales: {
+              xAxes: [{
+                ticks: {
+                  fontColor: "#fff",
+                },
+                gridLines: {
+                  color: "#ffffff61" 
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  fontColor: "#fff", 
+                },
+                gridLines: {
+                  color: "#ffffff61" 
+                }
+              }]
+            }
+            };
+
+            new Chart(barChartCanvas, {
+              type: "bar",
+              data: barChartData,
+              options: barChartOptions,
+            });
+
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
+        });
+      }
+
+      function loadTpIndexChart(endpoint) {
+        $.ajax({
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (jsonResponse) => {
+          
+            var areaChartData = {
+              labels: Object.keys(jsonResponse['FWP_is_success']),
+              datasets: [
+                {
+                  label: "FWP_is_success",
+                  backgroundColor: "#513B06",
+                  borderColor: "#513B06",
+                  pointRadius: false,
+                  pointColor: "#513B06",
+                  pointStrokeColor: "#513B06",
+                  pointHighlightFill: "#fff",
+                  pointHighlightStroke: "#513B06",
+                  data: Object.values(jsonResponse['FWP_is_success']),
+                },
+                {
+                  label: "FWP_is_failed",
+                  backgroundColor: "#FD7C11",
+                  borderColor: "#FD7C11",
+                  pointRadius: false,
+                  pointColor: "#FD7C11",
+                  pointStrokeColor: "#FD7C11",
+                  pointHighlightFill: "#fff",
+                  pointHighlightStroke: "#FD7C11",
+                  data: Object.values(jsonResponse['FWP_is_failed']),
+                },
+              ],
+            };
+
+
+            var barChartCanvas = $("#barChart1").get(0).getContext("2d");
+            var barChartData = $.extend(true, {}, areaChartData);
+            var temp0 = areaChartData.datasets[0];
+            var temp1 = areaChartData.datasets[1];
+            barChartData.datasets[0] = temp0;
+            barChartData.datasets[1] = temp1;
+
+            var barChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              datasetFill: false,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              }, 
+              plugins: {
+                labels: {
+                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
+                  render: 'value',
+                  showZero: true,
+                  fontSize: 12,
+                  fontColor: '#fff',
+                }
+              },
+              scales: {
+              xAxes: [{
+                ticks: {
+                  fontColor: "#fff",
+                },
+                gridLines: {
+                  color: "#ffffff61" 
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  fontColor: "#fff", 
+                },
+                gridLines: {
+                  color: "#ffffff61" 
+                }
+              }]
+            }
+            };
+
+            new Chart(barChartCanvas, {
+              type: "bar",
+              data: barChartData,
+              options: barChartOptions,
+            });
+
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
+        });
+      }
+
+
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Phone Number</title>
+  </head>
+  <body>
+    <!-- <h1>Your Phone Number</h1> -->
+    {% if phone_number %}
+    <p>{{ phone_number }}</p>
+    {% else %}
+    <p>Could not retrieve phone number.</p>
+    {% endif %}
+
+    <form
+      id="quickForm"
+      method="post"
+      action="{% if phone_number %} {% url 'Panel:test' %} {% else %} {% url 'Panel:test' %} {% endif %}"
+    >
+      {% csrf_token %}
+      
+      <label for="phone_number">phone number</label>
+      <input
+        type="tel"
+        name="phone_number"
+        class="form-control"
+        id="phone_number"
+        value="{{phone_number}}"
+      />
+      {% if phone_number %}
+      <label for="token">token</label>
+      <input
+        type="tel"
+        name="token"
+        class="form-control"
+        id="token"
+        value="{{token}}"
+      />
+     
+     
+      {% endif %}
+
+      <!-- /.card-body -->
+      {% if phone_number %}
+         <button type="submit" class="btn btn-primary"> register</button>
+      {% else %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+      {% endif %}
+       
+    </form>
+  </body>
+</html>

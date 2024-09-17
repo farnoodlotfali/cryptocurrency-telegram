@@ -1,0 +1,480 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post Detail</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
+    />
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}" />
+  </head>
+
+  <body
+    class="hold-transition sidebar-mini layout-fixed dark-mode sidebar-collapse"
+  >
+    <div class="wrapper">
+      {% include 'Components/header.html' %}
+      <!-- sidebar -->
+      {% include 'Components/sidebar.html' %}
+
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <!-- Main content -->
+        <section class="content mt-3">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-3">
+                <!-- /.card -->
+
+                {% if predict %}
+                <!-- Predict Info -->
+                <div class="card card-primary">
+                  <div class="card-header">
+                    <h4 class="text-center text-white">Predict Info</h4>
+                  </div>
+
+                  <div class="card-body box-profile">
+                    <ul class="list-group list-group-unbordered mb-3">
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-cube mr-1 text-info"></i>
+                          Symbol
+                        </b>
+                        <span class="float-right">
+                          {{predict.symbol.name}}
+                        </span>
+                      </li>
+
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-shopping-cart mr-1 text-success"></i>
+                          Market
+                        </b>
+                        <span
+                          class="float-right {% if predict.market.name == 'FUTURES' %} text-pink {% else %} text-orange {% endif %}"
+                        >
+                          {{predict.market.name}}
+                        </span>
+                      </li>
+
+                      <li class="list-group-item d-flex justify-content-between align-items-baseline ">
+                        <b>
+                          <i class="far fa-clock mr-1 text-warning"></i>
+                          Status
+                        </b>
+                        <!-- success if id == 2,  failed if id == 3, failed with profit if id == 5  -->
+                        <strong
+                          class="float-right {% if predict.status.name == 'SUCCESS' %} text-lime {% elif predict.status.name == 'FAILED' or  predict.status.name == 'CANCELED' %} text-danger {% elif predict.status.name == 'FULLTARGET' %} text-green  {% elif predict.status.name == 'FAILED WITH PROFIT' %} text-orange {% else %} text-gray {% endif %}"
+                        >
+                          {{ predict.status.name }}
+                          <!-- icon -->
+                          {% if predict.status.id == 3 %}
+                          <!-- failed -->
+                          <i class="fas fa-2x fa-hand-middle-finger"></i>
+                          <!-- success -->
+                          {% elif predict.status.id == 2 %}
+                          <i class="fas fa-2x fa-hand-peace"></i>
+                          <!-- end -->
+                          {% endif %}
+                        </strong>
+                      </li>
+                      <li class="list-group-item">
+                        <b
+                          ><i
+                            class="fas fa-hand-holding-usd mr-1 text-muted"
+                          ></i>
+                          Position</b
+                        >
+                        <span
+                          class="float-right {% if predict.position.name == 'LONG' %} text-lime {% elif predict.position.name  == 'SHORT' %} text-danger {% else %} text-warning {% endif %}"
+                          >{% if predict.position %}
+                          <!-- has  position -->
+                          {{ predict.position}} {% else %} - {% endif %}
+                        </span>
+                      </li>
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-superscript text-primary mr-1"></i>
+                          Leverage
+                        </b>
+                        <span class="float-right">
+                          {% if predict.leverage %}
+                          <!-- has  leverage -->
+                          {{ predict.leverage}} {% else %} - {% endif %}
+                        </span>
+                      </li>
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-times-circle text-danger mr-1"></i>
+                          StopLoss
+                        </b>
+                        <span class="float-right"> {{predict.stopLoss}} </span>
+                      </li> 
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fa fa-money-bill-wave text-teal mr-1"></i>
+                          Profit
+                        </b>
+                        <span class="float-right"> {{predict.profit}} % </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                {% endif %}
+
+                <!-- Message Box -->
+                <div class="card card-primary">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="far fa-envelope mr-1"></i> Post Message
+                    </h3>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body">
+                    <p class="text-muted">{{ post.message }}</p>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+
+                <!-- Post Info -->
+                <div class="card card-primary card-outline">
+                  <div class="card-body box-profile">
+                    <p class="text-muted text-center">Post Info</p>
+
+                    <ul class="list-group list-group-unbordered mb-3">
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-hat-wizard mr-1"></i>
+                          Predict Message
+                        </b>
+                        <span class="float-right">
+                          {% if post.is_predict_msg %}
+                          <!-- edit_date -->
+                          <i class="fas fa-check text-success"></i>
+                          <!-- else -->
+                          {% else %}
+                          <i class="fas fa-times text-danger"></i>
+                          {% endif %}
+                        </span>
+                      </li>
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-window-maximize mr-1"></i>
+                          Channel ID
+                        </b>
+                        <a
+                          href="{% url 'Panel:channel_detail' post.channel.channel_id %}"
+                          class="float-right"
+                          style="cursor: pointer"
+                        >
+                          {{ post.channel.channel_id }}
+                        </a>
+                      </li>
+
+                      <li class="list-group-item">
+                        <b>
+                          <i class="far fa-envelope-open mr-1"></i>
+                          Message ID
+                        </b>
+                        <span class="float-right">{{ post.message_id }}</span>
+                      </li>
+                      <li class="list-group-item">
+                        <b><i class="fas fa-calendar-check mr-1"></i> Date</b>
+                        <span class="float-right">{{ post.date }}</span>
+                      </li>
+                      <li class="list-group-item">
+                        <b>
+                          <i class="fas fa-list-ol mr-1"></i>
+                          Related Messages
+                        </b>
+                        <span class="float-right">
+                          {{related_posts|length}}
+                        </span>
+                      </li>
+                      <li class="list-group-item">
+                        <b><i class="fas fa-edit mr-1"></i> Edit Date</b>
+                        <span class="float-right">
+                          {% if post.edit_date %}
+                          <!-- edit_date -->
+                          {{ post.edit_date }}
+                          <!-- else -->
+                          {% else %} _ {% endif %}
+                        </span>
+                      </li>
+                    </ul>
+
+                    <button
+                      id="load-posts-btn"
+                      class="btn btn-primary btn-block"
+                    >
+                      <b>Follow</b>
+                    </button>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+              </div>
+              <!-- /.col -->
+              <div class="col-md-9">
+                {% if predict %}
+                <div class="row">
+                  <!-- entries -->
+                  <div class="col-md-12">
+                    <div class="card card-primary">
+                      <div class="card-header">
+                        <h4 class="text-center text-white">
+                          Entry Targets Status
+                        </h4>
+                      </div>
+                      <!-- /.card-header -->
+                      <div class="card-body">
+                        <div class="tab-content">
+                          <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                              <tr>
+                                <th scope="col">Index</th>
+                                <th scope="col">Value</th>
+                                <th scope="col">Active</th>
+                                <th scope="col">Period</th>
+                                <th scope="col">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for entry in entries %}
+                              <tr>
+                                <th>
+                                  <!-- Index -->
+                                  {{entry.index}}
+                                </th>
+                                <th>
+                                  <!-- Value -->
+                                  {{entry.value}}
+                                </th>
+                                <th class="text-center">
+                                  <!-- Active -->
+                                  {% if entry.active %}
+                                  <!-- true -->
+                                  <i
+                                    class="fas fa-check-square text-success"
+                                  ></i>
+                                  {% else %}
+                                  <i class="fas fa-times text-danger"></i>
+
+                                  {% endif %}
+                                </th>
+                                <th>
+                                  <!-- Period -->
+                                  {% if entry.period %}
+                                  <!-- true -->
+                                  {{entry.period}}
+                                  <!-- else -->
+                                  {% else %} - {% endif %}
+                                </th>
+                                <th>
+                                  <!-- Date -->
+                                  {% if entry.date %}
+                                  <!-- has date -->
+                                  {{entry.date}}
+                                  <!-- else -->
+                                  {% else %} - {% endif %}
+                                </th>
+                              </tr>
+
+                              {% endfor %}
+                            </tbody>
+                          </table>
+
+                          <!-- /.post -->
+                        </div>
+                      </div>
+                      <!-- /.card-body -->
+                    </div>
+                  </div>
+
+                  <!-- take_profits -->
+                  <div class="col-md-12">
+                    <div class="card card-primary">
+                      <div class="card-header">
+                        <h4 class="text-center text-white">
+                          Take Profits Status
+                        </h4>
+                      </div>
+                      <!-- /.card-header -->
+                      <div class="card-body">
+                        <div class="tab-content">
+                          <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                              <tr>
+                                <th scope="col">Index</th>
+                                <th scope="col">Value</th>
+                                <th scope="col">Active</th>
+                                <th scope="col">Period</th>
+                                <th scope="col">Profit</th>
+                                <th scope="col">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for tp in take_profits %}
+                              <tr>
+                                <th>
+                                  <!-- Index -->
+                                  {{tp.index}}
+                                </th>
+                                <th>
+                                  <!-- Value -->
+                                  {{tp.value}}
+                                </th>
+                                <th class="text-center">
+                                  <!-- Active -->
+                                  {% if tp.active %}
+                                  <!-- true -->
+                                  <i
+                                    class="fas fa-check-square text-success"
+                                  ></i>
+                                  {% else %}
+                                  <i class="fas fa-times text-danger"></i>
+
+                                  {% endif %}
+                                </th>
+                                <th>
+                                  <!-- Period -->
+                                  {% if tp.period %}
+                                  <!-- true -->
+                                  {{tp.period}}
+                                  <!-- else -->
+                                  {% else %} - {% endif %}
+                                </th>
+                                <th>
+                                  <!-- Profit -->
+                                  {{tp.profit}} %
+                                </th> 
+                                <th>
+                                  <!-- Date -->
+                                  {% if tp.date %}
+                                  <!-- has date -->
+                                  {{tp.date}}
+                                  <!-- else -->
+                                  {% else %} - {% endif %}
+                                </th>
+                              </tr>
+
+                              {% endfor %}
+                            </tbody>
+                          </table>
+
+                          <!-- /.post -->
+                        </div>
+                      </div>
+                      <!-- /.card-body -->
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+
+                <!-- related msgs -->
+                <div class="card">
+                  <div class="card-header p-2">
+                    <h4 class="p-3 text-center">Related Messages</h4>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body">
+                    <div class="tab-content">
+                      <!-- Post -->
+                      {% for item in related_posts %}
+                      <div class="post">
+                        <div class="user-block">
+                          <div class="username d-flex justify-content-between">
+                            <div>
+                              <i class="fas fa-envelope mr-1"></i>
+                              <a href="{% url 'Panel:post_detail' item.id %}">
+                                {{item.id}}</a
+                              >
+                            </div>
+                            <small>
+                              <i class="far fa-envelope-open mr-1"></i>
+                              <span> {{item.message_id}}</span>
+                            </small>
+                          </div>
+                          <span class="description">{{item.date}}</span>
+                        </div>
+
+                        <!-- /.user-block -->
+                        <p>{{item.message}}</p>
+                      </div>
+                      {% endfor %}
+
+                      <!-- /.post -->
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+              </div>
+              <!-- /.col -->
+            </div>
+            <!-- /.row -->
+          </div>
+          <!-- /.container-fluid -->
+        </section>
+        <!-- /.content -->
+      </div>
+      <!-- /.content-wrapper -->
+
+      <!-- Control Sidebar -->
+      <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+      </aside>
+      <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+
+    <script>
+      $(document).ready(function () {
+        $("#load-posts-btn").click(function () {
+          $.ajax({
+            url: "/panel/get-posts-api/", // URL mapped to the get_posts view
+            dataType: "json",
+            success: function (response) {
+              // Handle the successful response
+              console.log(JSON.parse(response));
+              // Do something with the posts data, e.g., display it on the page
+            },
+            error: function (xhr, errmsg, err) {
+              // Handle any errors
+              console.log(xhr.status + ": " + xhr.responseText);
+            },
+          });
+        });
+      });
+    </script>
+    <script>
+      // function logout() {
+      //     fetch('{% url 'Panel:logout' %}', {
+      //         method: 'POST',
+      //         headers: {
+      //             'X-CSRFToken': '{{ csrf_token }}'
+      //         }
+      //     })
+      //     .then(response => {
+      //         if (response.ok) {
+      //             window.location.href = '{% url 'Panel:home' %}';
+      //         }
+      //     });
+      // }
+    </script>
+  </body>
+</html>

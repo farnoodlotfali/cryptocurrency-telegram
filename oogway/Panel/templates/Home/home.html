@@ -1,0 +1,495 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
+    />
+    <!-- Ionicons -->
+    <link
+      rel="stylesheet"
+      href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"
+    />
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}"
+    />
+    <!-- iCheck -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}"
+    />
+    <!-- JQVMap -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/jqvmap/jqvmap.min.css' %}"
+    />
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}" />
+    <!-- overlayScrollbars -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}"
+    />
+    <!-- Daterange picker -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/daterangepicker/daterangepicker.css' %}"
+    />
+    <!-- summernote -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/summernote/summernote-bs4.min.css' %}"
+    />
+  </head>
+  <body
+    class="hold-transition sidebar-mini layout-fixed dark-mode sidebar-collapse"
+  >
+    <div class="wrapper">
+      <!-- Preloader -->
+      <div
+        class="preloader flex-column justify-content-center align-items-center"
+      >
+        <img
+          class="animation__shake"
+          src="{% static 'dist/img/TradeMaster.png' %}"
+          alt="AdminLTELogo"
+          height="60"
+          width="60"
+        />
+      </div>
+
+      {% include 'Components/header.html' %}
+      <!-- sidebar -->
+      {% include 'Components/sidebar.html' %}
+
+      <div class="content-wrapper">
+        <!-- Main content -->
+        <section class="content mt-3">
+          <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+              <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-info">
+                  <div class="inner">
+                    <h3>{{channels|length}}</h3>
+
+                    <p>Channels</p>
+                  </div>
+                  <div class="icon">
+                    <i class="fas fa-th"></i>
+                  </div>
+                  <a
+                    href="{% url 'Panel:channel_list' %}"
+                    class="small-box-footer"
+                    >More info <i class="fas fa-arrow-circle-right"></i
+                  ></a>
+                </div>
+              </div>
+              <!-- ./col -->
+              <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-success">
+                  <div class="inner">
+                    <h3>{{predicts|length}}</h3>
+
+                    <p>Predicts</p>
+                  </div>
+                  <div class="icon">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <!-- <i class="ion ion-stats-bars"></i> -->
+                  </div>
+                  <a href="{% url 'Panel:predict' %}" class="small-box-footer"
+                    >More info <i class="fas fa-arrow-circle-right"></i
+                  ></a>
+                </div>
+              </div>
+              <!-- ./col -->
+              <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-warning">
+                  <div class="inner">
+                    <h3>-</h3>
+
+                    <p>Signal Processed</p>
+                  </div>
+                  <div class="icon">
+                    <i class="ion ion-person-add"></i>
+                  </div>
+                  <a href="#" class="small-box-footer"
+                    >More info <i class="fas fa-arrow-circle-right"></i
+                  ></a>
+                </div>
+              </div>
+              <!-- ./col -->
+              <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-danger">
+                  <div class="inner">
+                    <h3>-</h3>
+
+                    <p>Signal UnProcessed</p>
+                  </div>
+                  <div class="icon">
+                    <i class="ion ion-pie-graph"></i>
+                  </div>
+                  <a href="#" class="small-box-footer"
+                    >More info <i class="fas fa-arrow-circle-right"></i
+                  ></a>
+                </div>
+              </div>
+              <!-- ./col -->
+            </div>
+            <!-- /.row -->
+            <!-- Main row -->
+            <div class="row">
+              <section class="col-lg-7 connectedSortable">
+                <div class="card card-blue">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chart-area mr-1"></i>
+                      Btc Chart
+                    </h3>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body">
+                    <div class="tab-content p-0">
+                      <div id="btcChart"></div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+              </section>
+
+              <section class="col-lg-5 connectedSortable">
+                <!-- Custom tabs (Charts with tabs)-->
+                <div class="card card-pink">
+                  <div class="card-header ">
+                    <h3 class="card-title">
+                      <i class="fas fa-chart-bar mr-1"></i>
+                      Predicts Status
+                    </h3>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body">
+                    <canvas
+                      id="pieChart"
+                      style="
+                        min-height: 250px;
+                        height: 250px;
+                        max-height: 250px;
+                        max-width: 100%;
+                      "
+                    ></canvas>
+                </div>
+              </section>
+
+              <!--   Channels Predicts Status -->
+              <section class="col-12 connectedSortable">
+                <div class="card card-purple">
+                  <div class="card-header">
+                    <h3 class="card-title">
+                      <i class="fas fa-chart-pie mr-1"></i>
+                      Channels Predicts Status
+                    </h3>
+                  </div>
+                  <!-- /.card-header -->
+                    <!-- PIE CHART -->
+                      <div class="card-body">
+                        <div class="chart">
+                          <canvas
+                            id="barChart"
+                            style="
+                              min-height: 250px;
+                              height: 250px;
+                              max-height: 250px;
+                              max-width: 100%;
+                            "
+                          ></canvas>
+                        </div>
+                      </div>
+                </div>
+              </section>
+            </div>
+            <!-- /.row (main row) -->
+          </div>
+          <!-- /.container-fluid -->
+        </section>
+        <!-- /.content -->
+      </div>
+
+      <!-- Control Sidebar -->
+      <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+      </aside>
+      <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="{% static 'plugins/jquery-ui/jquery-ui.min.js' %}"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+      $.widget.bridge("uibutton", $.ui.button);
+    </script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- ChartJS -->
+    <script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
+    <!-- Sparkline -->
+    <script src="{% static 'plugins/sparklines/sparkline.js' %}"></script>
+    <!-- JQVMap -->
+    <script src="{% static 'plugins/jqvmap/jquery.vmap.min.js' %}"></script>
+    <script src="{% static 'plugins/jqvmap/maps/jquery.vmap.usa.js' %}"></script>
+    <!-- jQuery Knob Chart -->
+    <script src="{% static 'plugins/jquery-knob/jquery.knob.min.js' %}"></script>
+    <!-- daterangepicker -->
+    <script src="{% static 'plugins/moment/moment.min.js' %}"></script>
+    <script src="{% static 'plugins/daterangepicker/daterangepicker.js' %}"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="{% static 'plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js' %}"></script>
+    <!-- Summernote -->
+    <script src="{% static 'plugins/summernote/summernote-bs4.min.js' %}"></script>
+    <!-- overlayScrollbars -->
+    <script src="{% static 'plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js' %}"></script>
+
+    <script src="{% static 'dist/js/adminlte.js' %}"></script>
+    <!-- AdminLTE for demo purposes -->
+
+    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+    <script src="{% static 'dist/js/pages/dashboard.js' %}"></script>
+    <script>
+      function logout() {
+          fetch('{% url 'Panel:logout' %}', {
+              method: 'POST',
+              headers: {
+                  'X-CSRFToken': '{{ csrf_token }}'
+              }
+          })
+          .then(response => {
+              if (response.ok) {
+                  window.location.href = '{% url 'Panel:home' %}';
+              }
+          });
+      }
+    </script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <!-- ChartJS -->
+    <script>
+      const pendingColor = "#f39c12"
+      const successColor = "#00a65a"
+      const failedColor = "#f00"
+      const canceledColor = "#f56954"
+      $(document).ready(function () {
+        loadPredictStatusChart("chart/predict-status/");
+        loadChannelsPredictsStatusChart("chart/channel-predict-status/");
+      });
+
+      function loadPredictStatusChart( endpoint) {
+        $.ajax({
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (jsonResponse) => {
+            var pieChartCanvas = $("#pieChart").get(0).getContext("2d");
+            var donutData = {
+              labels: jsonResponse.labels,
+              datasets: [
+                {
+                  data: jsonResponse.data,
+                  backgroundColor: [pendingColor, successColor,failedColor, canceledColor],
+                },
+              ],
+            };
+            var pieData = donutData;
+            var pieOptions = {
+              maintainAspectRatio: false,
+              responsive: true,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              },
+            };
+            //Create pie or douhnut chart
+            // You can switch between pie and douhnut using the method below.
+            new Chart(pieChartCanvas, {
+              type: "pie",
+              data: pieData,
+              options: pieOptions,
+            });
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
+        });
+      }
+
+      function loadChannelsPredictsStatusChart(endpoint) {
+        $.ajax({
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (res) => {
+            const pending = res.data.map((obj) => obj["PENDING"]);
+            const success = res.data.map((obj) => obj["SUCCESS"]);
+            const failed = res.data.map((obj) => obj["FAILED"]);
+            const canceled = res.data.map((obj) => obj["CANCELED"]);
+            const datasets = [
+              {
+                label: "PENDING",
+                backgroundColor: pendingColor,
+                borderColor: pendingColor,
+                pointRadius: false,
+                pointColor: pendingColor,
+                pointStrokeColor: pendingColor,
+                pointHighlightFill: pendingColor,
+                pointHighlightStroke: pendingColor,
+                data: pending,
+              },
+              {
+                label: "SUCCESS",
+                backgroundColor: successColor,
+                borderColor: successColor,
+                pointRadius: false,
+                pointColor: successColor,
+                pointStrokeColor: successColor,
+                pointHighlightFill: successColor,
+                pointHighlightStroke: successColor,
+                data: success,
+              },
+              {
+                label: "FAILED",
+                backgroundColor: failedColor,
+                borderColor: failedColor,
+                pointRadius: false,
+                pointColor: failedColor,
+                pointStrokeColor: failedColor,
+                pointHighlightFill: failedColor,
+                pointHighlightStroke: failedColor,
+                data: failed,
+              },
+              {
+                label: "CANCELED",
+                backgroundColor: canceledColor,
+                borderColor: canceledColor,
+                pointRadius: false,
+                pointColor: canceledColor,
+                pointStrokeColor: canceledColor,
+                pointHighlightFill: canceledColor,
+                pointHighlightStroke: canceledColor,
+                data: canceled,
+              },
+            ];
+
+            var barChartCanvas = $("#barChart").get(0).getContext("2d");
+            var barChartData = $.extend(
+              true,
+              {},
+              {
+                labels: res.labels,
+                datasets: datasets,
+              }
+            );
+
+            var barChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              datasetFill: false,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              },
+              scales: {
+                yAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
+                      // fontSize: 18,
+                      // stepSize: 1,
+                      // beginAtZero: true
+                      // forces step size to be 50 units
+                      stepSize: 1,
+                    },
+                    gridLines: {
+                      zeroLineColor: "#fff",
+                      color: "#fff",
+                    },
+                  },
+                ],
+                xAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
+                    },
+                    gridLines: {
+                      zeroLineColor: "#fff",
+                      color: "#fff",
+                    },
+                  },
+                ],
+              },
+            };
+
+            new Chart(barChartCanvas, {
+              type: "bar",
+              data: barChartData,
+              options: barChartOptions,
+            });
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
+        });
+      }
+
+    </script>
+    <script>
+      // Fetch BTC price data from CoinGecko API
+      fetch(
+        "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const prices = data.prices;
+
+          // Extract timestamps and prices
+          const btcData = prices.map((item) => [item[0], item[1]]);
+
+          // Create chart using Highcharts
+          Highcharts.chart("btcChart", {
+            chart: {
+              type: "spline",
+            },
+            title: {
+              text: "Bitcoin Price (USD)",
+            },
+            xAxis: {
+              type: "datetime",
+            },
+            yAxis: {
+              title: {
+                text: "Price (USD)",
+              },
+            },
+            series: [
+              {
+                name: "BTC",
+                data: btcData,
+              },
+            ],
+          });
+        });
+    </script>
+  </body>
+</html>

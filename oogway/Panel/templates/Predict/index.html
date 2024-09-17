@@ -1,0 +1,376 @@
+{% load static %}
+{% load navigation_tags %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Predicts</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
+    />
+    <!-- DataTables -->
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}"
+    />
+     <!-- Select2 -->
+    <link
+     rel="stylesheet"
+     href="{% static 'plugins/select2/css/select2.min.css' %}"
+    />
+ 
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}" />
+  </head>
+  <body
+    class="hold-transition sidebar-mini layout-fixed dark-mode sidebar-collapse"
+  >
+    <div class="wrapper">
+      <!-- header -->
+      {% include 'Components/header.html' %}
+      <!-- sidebar -->
+      {% include 'Components/sidebar.html' %}
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <!-- Main content -->
+        <section class="content mt-3">
+          <div class="container-fluid">
+            <div class="row">
+              <!-- filter -->
+              <div class="col-12">
+                <div class="card card-body">
+                  <form class="row ">
+                    <div class="col-4">
+                      <a href="{% url 'Panel:predict' %}" class="btn btn-danger btn-outline px-5" >
+                        Reset
+                      </a>
+                      <button class="btn btn-primary px-5" type="submit">
+                        Filter
+                      </button>
+                    </div>
+                    <div class="col-4"></div>
+                    <div class="col-2">
+
+                      <div class="select2-lime">
+                        <select
+                          class="select2"
+                          data-placeholder="Select a Channel"
+                          data-dropdown-css-class="select2-lime"
+                          style="width: 100%"
+                          name="channel"
+                          id="channel"
+                        >
+                          <option></option>
+                          {% for channel in channels %}
+                            <option
+                              value="{{channel.channel_id}}"
+                              {% if channel_param == channel.channel_id %}selected="selected"{% endif %}
+                            >
+                              {{channel.name}}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      
+                  
+                    </div>
+                    <div class="col-2">
+                      <div class="select2-purple">
+                        <select
+                          class="select2"
+                          data-placeholder="Select a Symbol"
+                          data-dropdown-css-class="select2-purple"
+                          style="width: 100%"
+                          name="symbol"
+                          id="symbol"
+                        >
+                          <option></option>
+                          {% for symbol in symbols %}
+                            <option
+                              value="{{symbol.name}}"
+                              {% if symbol_param == symbol.name %}selected="selected"{% endif %}
+                            >
+                              {{symbol.name}}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </div>  
+                  </form>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Predict Table</h3>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body">
+                    <table
+                      id="example1"
+                      class="table table-bordered table-striped"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">Id</th>
+                          <th scope="col">Symbol</th>
+                          <th scope="col">Market</th>
+                          <th scope="col">Position</th>
+                          <th scope="col">Leverage</th>
+                          <th scope="col">StopLoss</th>
+                          <th scope="col">Status/Type</th>
+                          <th scope="col">Post (id-message)</th>
+                          <th scope="col">Channel ID</th>
+                          <th scope="col">Date</th>
+                          <th scope="col">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for predict in predicts %}
+                        <tr>
+                          <th>
+                            <!-- Id -->
+                            {{predict.id}}
+                          </th>
+                          <th>
+                            <!-- symbol name -->
+                            {{predict.symbol.name}}
+                          </th>
+                          <th
+                            class="{% if predict.market.name == 'FUTURES' %} text-pink {% else %} text-orange {% endif %}"
+                          >
+                            <!-- market name -->
+                            {{predict.market.name}}
+                          </th>
+                          <th
+                            class="{% if predict.position.name == 'LONG' %} text-green {% elif predict.position.name == 'SHORT' %} text-red {% else %} text-warning {% endif %}"
+                          >
+                            <!-- position -->
+                            {% if predict.position %}
+                            <!-- has  position -->
+                            {{ predict.position.name }} {% if predict.position.name == 'LONG' %} ↑ {% else %} ↓ {% endif %}
+                            {% else %} - {% endif %}
+                          </th>
+                          <th>
+                            <!-- leverage -->
+                            {% if predict.leverage %}
+                            <!-- has  leverage -->
+                            {{ predict.leverage}} {% else %} - {% endif %}
+                          </th>
+                          <th>
+                            <!-- stopLoss -->
+                            {{predict.stopLoss}}
+                        </th>
+                          <th>
+                            <!-- status -->
+                            <div
+                             class="{{ predict.status.name|status_color }}"
+                            >
+                              {{predict.status.name}} / 
+                              ({{predict.status.type}}) 
+                              {% if predict.status.name == 'FULLTARGET' %}
+                                <i class="fa fa-star fa-spin text-warning"></i>
+                              {% endif %}
+                            </div>
+                          </th>
+                          <th>
+                            <!-- post -->
+                            {{predict.post.id}} - {{predict.post.message_id}}
+                          </th>
+                          <th>
+                            <!-- channel_id -->
+                            {{predict.post.channel.channel_id}}
+                          </th>
+                          <th>
+                            <!-- date -->
+                            <small>{{predict.date.timestamp}}</small>
+                            <br>
+                            {{predict.date}}
+                          </th>
+                          <th >
+                            <!-- actions -->
+                            <div class="d-flex flex-warp">
+                                <a
+                                  href="{% url 'Panel:post_detail' predict.post.id %}"
+                                  title="See detail"
+                                >
+                                  <i class="fas fa-eye text-cyan"></i>
+                                </a>
+                                <a
+                                  href="{% url 'Panel:channel_detail' predict.post.channel.channel_id %}"
+                                  title="See channel"
+                                  class="ml-2"
+                                >
+                                  <i class="fas fa-window-maximize text-yellow"></i>
+                                </a>
+                                {% if predict.status.name != 'FAILED'%}
+                                  <a
+                                    href="{% url 'Panel:change_predict_status' predict.id 'FAILED' %}"
+                                    title="Fail"
+                                    class="ml-2" >
+                                    <i class=" far fa-sad-tear text-red"></i>
+                                  </a>
+                                {% endif %}
+
+                                {% if predict.status.name != 'SUCCESS'%}
+                                  <a
+                                    href="{% url 'Panel:change_predict_status' predict.id 'SUCCESS' %}"
+                                    title="Success"
+                                    class="ml-2" >
+                                    <i class="far fa-smile-beam text-lime"></i>
+                                  </a>
+                                {% endif %}
+                                
+                                
+                                {% if predict.status.name == 'PENDING' and predict.order_id %}
+                                <a
+                                  href="{% url 'Panel:cancel_order' predict.symbol.name predict.order_id predict.market.name%}"
+                                  title="Cancel Order"
+                                  class="ml-2"
+                                >
+                                  <i class="fas fa-ban text-red"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                          </th>
+                        </tr>
+
+                        {% endfor %}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="col">Id</th>
+                          <th scope="col">Symbol</th>
+                          <th scope="col">Market</th>
+                          <th scope="col">Position</th>
+                          <th scope="col">Leverage</th>
+                          <th scope="col">StopLoss</th>
+                          <th scope="col">Status</th>
+                          <th scope="col">Post (id-message)</th>
+                          <th scope="col">Channel ID</th>
+                          <th scope="col">Date</th>
+                          <th scope="col">Actions</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+              </div>
+              <!-- /.col -->
+            </div>
+            <!-- /.row -->
+          </div>
+          <!-- /.container-fluid -->
+        </section>
+        <!-- /.content -->
+      </div>
+
+      <!-- Control Sidebar -->
+      <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+      </aside>
+      <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- DataTables  & Plugins -->
+    <script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/jszip/jszip.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/pdfmake.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/vfs_fonts.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.print.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.colVis.min.js' %}"></script>
+    <!-- Select2 -->
+    <script src="{% static 'plugins/select2/js/select2.full.min.js' %}"></script>
+    <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+
+    <!-- Page specific script -->
+    <script>
+        $(function () {
+        //Initialize Select2 Elements
+        $(".select2").select2();
+
+        //Initialize Select2 Elements
+        $(".select2bs4").select2({
+          theme: "bootstrap4",
+        });
+       
+      });
+      
+      $(function () {
+        $("#example1")
+          .DataTable({
+            responsive: true,
+            lengthChange: false,
+            autoWidth: false,
+            buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            // search: {
+            //   search: "12",
+            // },
+            order: [[9, "desc"]],
+          })
+          .buttons()
+          .container()
+          .appendTo("#example1_wrapper .col-md-6:eq(0)");
+      });
+
+      // function changeStatus(e,id) {
+      //   $.ajax({
+      //       url: `/panel/change-predict-status/${id}/${e.value}/`,
+      //       dataType: "json",
+      //       success: function (response) {
+             
+      //       },
+      //       error: function (xhr, errmsg, err) {
+      //         console.log(xhr.status + ": " + xhr.responseText);
+      //       },
+      //     });
+      // }
+      
+      function cancelOrder(symbol,order_id) {
+        $.ajax({
+            url: `cancel-order-api/${symbol}/${order_id}/`, // URL mapped to the get_posts view
+            dataType: "json",
+            success: function (response) {
+              // Handle the successful response
+              // Do something with the posts data, e.g., display it on the page
+            },
+            error: function (xhr, errmsg, err) {
+              // Handle any errors
+              console.log(xhr.status + ": " + xhr.responseText);
+            },
+          });
+      }
+
+    </script>
+    
+  </body>
+</html>
