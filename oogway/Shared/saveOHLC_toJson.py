@@ -1,6 +1,6 @@
-from Shared.loadOHLC_FromJson import loadOHLC_FromJson
+
 from operator import itemgetter
-from PostAnalyzer.Utility.utils import convertToJsonFile
+from Shared.helpers import convertToJsonFile
 
 async def saveOHLC_toJson(symbolName, path, data):
     unique_data = {}

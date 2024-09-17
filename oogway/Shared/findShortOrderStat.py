@@ -6,7 +6,7 @@ from bingx.api import BingxAPI
 from PostAnalyzer.models import (
     Symbol,
 )
-from PostAnalyzer.Utility.utils import load_json
+from Shared.helpers import load_json
 
 config = dotenv_values(".env")
 

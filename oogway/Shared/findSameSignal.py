@@ -1,7 +1,6 @@
 # ## Ignore Same Signal
 # if predict_status is "SUCCESS" or "PENDING", will remove it to check again
 
-from django.utils import timezone as timezoneDU
 from datetime import timedelta
 from asgiref.sync import sync_to_async
 from PostAnalyzer.models import (

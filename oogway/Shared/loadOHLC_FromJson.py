@@ -1,4 +1,4 @@
-from PostAnalyzer.Utility.utils import load_json
+from Shared.helpers import load_json
 
 def loadOHLC_FromJson(symbolName, path):
    try:

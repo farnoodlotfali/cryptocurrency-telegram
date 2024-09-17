@@ -5,7 +5,7 @@ import sys
 project_path = '../../'  # Adjust this to your actual project path
 sys.path.append(project_path)
 
-from PostAnalyzer.Utility.utils import load_json, getNowTimestamp, print_colored
+from Shared.helpers import load_json, getNowTimestamp, print_colored
 from Shared.saveOHLC_toJson import saveOHLC_toJson
 
 config = dotenv_values(".env")

@@ -14,7 +14,7 @@ from ..models import (
     TakeProfitTarget,
     SettingConfig,
 )
-from ..Utility.utils import returnSearchValue
+from Shared.helpers import returnSearchValue
 from .BingXApiClass import BingXApiClass
 
 
