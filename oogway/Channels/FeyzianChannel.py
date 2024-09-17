@@ -19,24 +19,30 @@ from PostAnalyzer.models import (
 from Shared.helpers import returnSearchValue
 from Shared.Exchange import exchange
 from Shared.SymbolConverter import SymbolConverter
+from Shared.findError import findError
+from Shared.findRiskToReward import findRiskToReward
+from Shared.findSameSignal import findSameSignal
+from typing import Optional
+
 
 # ****************************************************************************************************************************
 
 class FeyzianChannel(AbsChannel):
     
     # determine if a message is a predict message or not
-    def isPredictMsg(self, msg):
+    def isPredictMsg(self, msg)->bool:
         patterns = [
-            r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
-            r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
-            r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
-            r"Market:\s*([A-Z]+)",
-            r"(StopLoss|Description):\s*([\d.]|\w+)",
+        r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
+        r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
+        r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
+        r"Market:\s*([A-Z]+)",
+        r"(StopLoss|Description):\s*([\d.]|\w+)",
         ]
 
-        return all(re.search(pattern, msg) for pattern in patterns)
+        # Check if all patterns have a value
+        return all(re.search(pattern, msg, re.IGNORECASE) for pattern in patterns)
 
-    async def findSymbol(self, msg):
+    async def findSymbol(self, msg)-> Optional[Symbol]:
         symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
         
         try:
@@ -44,7 +50,7 @@ class FeyzianChannel(AbsChannel):
         except:
             return None
         
-    async def findMarket(self, msg):
+    async def findMarket(self, msg)-> Optional[Market]:
         market_match = re.search(r"Market:\s*([A-Z]+)", msg, re.IGNORECASE)
         
         try:
@@ -53,7 +59,7 @@ class FeyzianChannel(AbsChannel):
         except:
             return None
 
-    async def findPosition(self, msg):
+    async def findPosition(self, msg)-> Optional[PositionSide]:
         position_match = re.search(r"Position:\s*([A-Z]+)", msg)
         
         try:
@@ -61,42 +67,93 @@ class FeyzianChannel(AbsChannel):
             return position_value
         except:
             return None
-        
-    async def findLeverageAndMarginMode(self, msg):
+    
+    async def findLeverageAndMarginMode(self, msg)-> tuple[Optional[MarginMode], Optional[int]]:
         leverage_match = re.search(r"Leverage:\s*(Isolated|Cross)\s*(\d+x)", msg, re.IGNORECASE)
         if leverage_match:
-            leverage_type = await sync_to_async(MarginMode.objects.get)(name=returnSearchValue(leverage_match).upper())   
+            margin_mode = await sync_to_async(MarginMode.objects.get)(name=returnSearchValue(leverage_match).upper())   
             leverage_value = int(leverage_match.group(2).lower().replace("x",""))    
         else:
-            leverage_type = None
+            margin_mode = None
             leverage_value = None
         
-        return leverage_type, leverage_value
+        return margin_mode, leverage_value
     
-    def findStopLoss(self, msg):
-        return returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg))
+    def findStopLoss(self, msg)-> Optional[float]:
+        msg = msg.replace(",","")
 
-    def findEntryTargets(self, msg):
+        return float(returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg)))
+
+    def findEntryTargets(self, msg)-> Optional[list[float]]:
+        msg = msg.replace(",","")
         match = re.search(r"Entry Targets:([\s\S]+?)Take-Profit", msg, re.IGNORECASE)
         match1 = re.search(r"Entry Price:([\s\S]+?)Take-Profit", msg, re.IGNORECASE)
         final = match if match else match1
         if final:
             extracted_data = returnSearchValue(final)
             return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data))  if i % 2 == 1]
-            
-    def findTakeProfits(self, msg):
+    
+    def findTakeProfits(self, msg)-> Optional[list[float]]:
+        msg = msg.replace(",","")
         match = re.search(r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)", msg, re.IGNORECASE)
         if match:
             extracted_data = returnSearchValue(match)
             return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data)) if i % 2 == 1]
+            
+    # Check if post is a Cancel predict or not
+    async def isCancel(self, post:Post)-> bool:
+        if post is None or post.reply_to_msg_id is None:
+            return False
         
+        try:
+            # cancel_before_patterns = [
+            #     r"Cancelled",
+            #     r"achieved",
+            #     r"entering",
+            # ]
+            manually_cancel_patterns = [
+                r"Cancelled",
+                r"Manually",
+            ]  
+            cancel_pattern =[
+                r"کنسل"
+            ]
+
+
+            # check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_before_patterns)
+            check1 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in manually_cancel_patterns)
+            check2 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_pattern)
+            
+            if check1 or check2 :
+                
+                predict = await sync_to_async(Predict.objects.get)(
+                    post__message_id=post.reply_to_msg_id
+                )
+                
+                status_value = await sync_to_async(PostStatus.objects.get)(name="CANCELED")
+            
+                predict.status = status_value
+                predict.profit = 0
+            
+                await sync_to_async(predict.save)()
+                return True
+                
+            else:
+                return False
+            
+        except:
+            # error_msg.append(model_to_dict(post))
+            return False
+
+
     # find important parts of a predict message such as symbol or entry point
-    async def predictParts(self, string, post:Post):
+    async def predictParts(self, string, post:Post)-> Optional[Predict]:
         if string is None or post is None:
             return None
         
+    # try:
         settings = await sync_to_async(SettingConfig.objects.get)(id=1)
-       
+    
         # symbol
         symbol_value = await self.findSymbol(string)
 
@@ -126,6 +183,27 @@ class FeyzianChannel(AbsChannel):
         # take_profit targets
         take_profit_targets_value = self.findTakeProfits(string)
 
+
+        # is_error = findError(position_value.name, take_profit_targets_value, entry_targets_value, stopLoss_value)
+        # if is_error:
+        #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
+
+
+        # return Error RR < 0.2
+        # TODO will add to setting, to get min RR
+        RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
+        
+        if RR < 0.2 or RR > 4:
+            status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
+    
+
+        # TODO check post.channel.id
+        # return false if signal already exists
+        # is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
+        #                             take_profit_targets_value,entry_targets_value,post.channel.id)
+        # if is_same_signal:
+        #     return False
+
         # set predict object to DB
         PredictData = {
             "post": post,
@@ -137,7 +215,7 @@ class FeyzianChannel(AbsChannel):
             "stopLoss": stopLoss_value,
             "margin_mode": marginMode_value,
             "profit": 0,
-            "status": status_value,  # PENDING = 1
+            "status": status_value, 
             "order_id": None,
         }
 
@@ -184,7 +262,8 @@ class FeyzianChannel(AbsChannel):
                 )
                 await sync_to_async(takeProfitData.save)()
 
-        if not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
+        # create order in exchange
+        if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
             max_entry_money = settings.max_entry_money
             leverage_effect = settings.leverage_effect
 
@@ -236,6 +315,10 @@ class FeyzianChannel(AbsChannel):
 
         await sync_to_async(newPredict.save)()
         return newPredict
+    # except:
+        
+    #     # error_msg.append(model_to_dict(post))
+    #     return None
     
     # main method
     async def extract_data_from_message(self, message):
@@ -261,7 +344,9 @@ class FeyzianChannel(AbsChannel):
             # predict msg
             if is_predict_msg:
                 await self.predictParts(message.message, post)
-
+            # cancel msg
+            elif await self.isCancel(post):
+                pass
             return PostData
         else:
             return None 
