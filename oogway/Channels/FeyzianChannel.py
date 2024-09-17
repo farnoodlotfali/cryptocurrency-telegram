@@ -27,7 +27,7 @@ class FeyzianChannel(AbsChannel):
     # determine if a message is a predict message or not
     def isPredictMsg(self, msg):
         patterns = [
-            r"Symbol:\s*#?([A-Z]+)[/\s]?USDT",
+            r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
             r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
             r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
             r"Market:\s*([A-Z]+)",
@@ -35,200 +35,6 @@ class FeyzianChannel(AbsChannel):
         ]
 
         return all(re.search(pattern, msg) for pattern in patterns)
-
-    # check if post is a Entry point or not
-    async def isEntry(self, PostData):
-        entry_price = returnSearchValue(
-            re.search(r"Entry Price: (.+)", PostData.message)
-        )
-
-        entry_index = returnSearchValue(re.search(r"Entry(.+)", PostData.message))
-
-        if entry_index:
-            # find number
-            entry_index = re.search(r"\d+", entry_index)
-            if entry_index:
-                entry_index = int(entry_index.group()) - 1
-            else:
-                return False
-        else:
-            return False
-
-        patterns = [r"Entry(.+)", r"Price:(.+)", r"Entry Price: (.+)"]
-        check = all(re.search(pattern, PostData.message) for pattern in patterns)
-
-        # Check if the words "achieved" and "all" are not present
-        words_absent = not re.search(r"achieved", PostData.message, re.IGNORECASE) and not re.search(r"\ball\b", PostData.message, re.IGNORECASE)
-       
-        # for control "average entry".
-        # sometimes entry_price is different to value. so we should find difference, then calculate error
-        if entry_price and check and words_absent:
-            entry_price_value = float(re.findall(r"\d+\.\d+", entry_price)[0])
-
-            entry_target = await sync_to_async(EntryTarget.objects.get)(
-                post__message_id=PostData.reply_to_msg_id, index=entry_index
-            )
-
-            if entry_target:
-                bigger_number = max(entry_price_value, float(entry_target.value))
-                smaller_number = min(entry_price_value, float(entry_target.value))
-
-                error = (100 * (1 - (smaller_number / bigger_number))) > 1
-                if error:
-                    return False
-                else:
-                    entry_target.active = True
-                    entry_target.date = PostData.date
-                    # entry_target.date = period
-                    await sync_to_async(entry_target.save)()
-                    return True
-
-        return False
-    
-    # check if post is a AllEntryPrice point or not
-    async def isAllEntryPrice(self, post):
-        if post is None or post.reply_to_msg_id is None:
-            return False   
-        patterns = [r"all entry targets\s", r"achieved\s", r"Entry Price:\s"]
-        check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in patterns)
-        
-        if check:
-            entry_targets = await sync_to_async(list)(
-                EntryTarget.objects.filter(post__message_id=post.reply_to_msg_id)
-            )
-            for target in entry_targets:
-                if not target.active:
-                    target.active = True
-                    target.date = post.date
-                    await sync_to_async(target.save)()
-                
-    # check if post is a Stoploss point or not
-    async def isStopLoss(self, post):
-        if post is None or post.reply_to_msg_id is None:
-            return False
-        
-        failed_with_profit_patterns = [
-            r"stoploss\s",
-            r"profit\s",
-            r"reaching\s",
-            r"closed\s",
-        ]
-
-        failed_patterns = [
-            r"stop\s",
-            r"target\s",
-            r"hit\s",
-            r"loss:\s",
-        ]
-
-        check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in failed_with_profit_patterns)
-        check1 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in failed_patterns)
-
-        if (check1):
-            status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED")
-        elif (check):
-            status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED WITH PROFIT")
-           
-        
-        if check or check1:
-            predict = await sync_to_async(Predict.objects.get)(
-                post__message_id=post.reply_to_msg_id
-            )
-            first_entry = await sync_to_async(EntryTarget.objects.get)(
-                post__message_id=post.reply_to_msg_id, index=0  
-            )
-            position_name = await sync_to_async(lambda: predict.position.name)()
-            isSHORT = position_name == "SHORT"
-            predict.status = status_value
-            predict.profit = round(((float(predict.stopLoss)/float(first_entry.value))-1)*100*float(predict.leverage) * (-1 if isSHORT else 1), 5)
-            await sync_to_async(predict.save)()
-            return True
-          
-        else:
-            return False
-
-    # check if post is a AllProfit point or not
-    async def isAllProfitReached(self, post):
-        if post is None or post.reply_to_msg_id is None:
-            return False   
-        patterns = [r"all take-profit\s", r"achieved\s", r"profit:\s", r"period:\s"]
-        check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in patterns)
-
-
-        if check:
-
-            take_profits = await sync_to_async(list)(
-                TakeProfitTarget.objects.filter(post__message_id=post.reply_to_msg_id)
-            )
-            for profit in take_profits:
-                if not profit.active:
-                    profit.active = True
-                    profit.date = post.date
-                    profit.period = returnSearchValue(
-                    re.search(r"Period: (.+)", post.message)
-                    )
-                    await sync_to_async(profit.save)()
-
-
-            status_value = await sync_to_async(PostStatus.objects.get)(name="SUCCESS")
-            predict_value = await sync_to_async(Predict.objects.get)(
-                post__message_id=post.reply_to_msg_id
-            )
-
-            predict_value.status = status_value
-            await sync_to_async(predict_value.save)()
-            return True
-        else:
-            return False
-
-    # check if post is a Take-Profit point or not
-    async def isTakeProfit(self, PostData):
-        if PostData is None or PostData.reply_to_msg_id is None:
-            return None
-        tp_index = returnSearchValue(
-            re.search(r"Take-Profit target(.+)", PostData.message)
-        )
-        if tp_index:
-            tp_index = re.search(r"\d+", tp_index)
-            if tp_index:
-                tp_index = int(tp_index.group()) - 1
-            else:
-                return False
-        else:
-            return False
-
-        patterns = [
-            r"Take-Profit(.+)",
-            r"Profit(.+)",
-            r"Period(.+)",
-        ]
-
-        # Check if all patterns have a value
-        check = all(re.search(pattern, PostData.message) for pattern in patterns)
-
-        if check:
-            tp_target = await sync_to_async(TakeProfitTarget.objects.get)(
-                post__message_id=PostData.reply_to_msg_id, index=tp_index
-            )
-            predict = await sync_to_async(Predict.objects.get)(
-                post__message_id=PostData.reply_to_msg_id
-            )
-
-            if tp_target:
-                tp_target.active = True
-                tp_target.date = PostData.date
-                tp_target.period = returnSearchValue(
-                    re.search(r"Period: (.+)", PostData.message)
-                )
-
-                predict.profit = tp_target.profit
-                
-                await sync_to_async(tp_target.save)()
-                await sync_to_async(predict.save)()
-                return True
-
-        return False
-
 
     async def findSymbol(self, msg):
         symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
@@ -431,6 +237,7 @@ class FeyzianChannel(AbsChannel):
         await sync_to_async(newPredict.save)()
         return newPredict
     
+    # main method
     async def extract_data_from_message(self, message):
         if isinstance(message, Message):
             is_predict_msg = self.isPredictMsg(message.message)
@@ -454,22 +261,6 @@ class FeyzianChannel(AbsChannel):
             # predict msg
             if is_predict_msg:
                 await self.predictParts(message.message, post)
-
-            # entry msg
-            elif await self.isEntry(post):
-                pass
-            # take profit msg
-            elif await self.isTakeProfit(post):
-                pass
-            # stop loss msg
-            elif await self.isStopLoss(post):
-                pass
-            # All Profit msg
-            elif await self.isAllProfitReached(post):
-                pass
-            # All EntryPrice msg
-            elif await self.isAllEntryPrice(post):
-                pass
 
             return PostData
         else:
