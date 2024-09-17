@@ -12,7 +12,6 @@ from telethon.tl.types import Message, PeerChannel
 
 from .classes.AliBeyranvand import AliBeyranvand
 from .classes.BinanceProMsg import BinanceProMsg
-from .classes.FeyzianMsg import FeyzianMsg
 from .classes.RastadMsg import RastadMsg
 from Channels.FeyzianChannel import FeyzianChannel
 
