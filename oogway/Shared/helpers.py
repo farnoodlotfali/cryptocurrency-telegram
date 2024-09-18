@@ -78,3 +78,20 @@ def getNowTimestamp():
     now = datetime.now().timestamp()
     return int(now * 1000)
 
+
+# load data of tohlcv / Timestamp, Open, High, Low, Close, Volume
+def load_historic_tohlcv_json(symbolName:str)-> list[any]:
+    return load_json(f"./../historic-json/{symbolName}.json")
+
+# save data of tohlcv to json / Timestamp, Open, High, Low, Close, Volume
+def save_historic_tohlcv_json(symbolName, data):
+    unique_data = {item[0]: item for item in data}
+
+    # Convert the dictionary back to a list of lists
+    unique_data_list = list(unique_data.values())
+
+    # Sort by the first element (timestamp) if needed
+    unique_data_list.sort(key=lambda x: x[0])
+    
+    convertToJsonFile(unique_data_list, symbolName, './../historic-json') 
+

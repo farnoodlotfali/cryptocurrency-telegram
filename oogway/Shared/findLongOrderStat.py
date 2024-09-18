@@ -1,27 +1,17 @@
 # LONG
-
 from Shared.updateOHLC_FromAPI import updateOHLC_FromAPI
-from dotenv import dotenv_values
-from bingx.api import BingxAPI
 from PostAnalyzer.models import (
     Symbol,
 )
-from Shared.helpers import load_json
+from Shared.helpers import load_historic_tohlcv_json
 
-config = dotenv_values(".env")
 
-API_KEY = config["API_KEY"]
-SECRET_KEY = config["SECRET_KEY"]
-historic_json_path = "./../historic-json"
-
-bingx =  BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
-
-async def findLongOrderStat(stop_loss,entry_price,symbol:Symbol,take_profit,start_timestamp):
+async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:Symbol, take_profit: list[float],start_timestamp: int):
     print(stop_loss,entry_price,symbol,take_profit,start_timestamp)
 
 
     await updateOHLC_FromAPI(start_timestamp, symbol.name)
-    LData = load_json(f"{historic_json_path}/{symbol.name}.json")
+    LData = load_historic_tohlcv_json(symbol.name)
 
     tp_turn = 0
     tp = take_profit[tp_turn]
@@ -32,12 +22,21 @@ async def findLongOrderStat(stop_loss,entry_price,symbol:Symbol,take_profit,star
     entry_reached = []
 
     stop_loss_reached = None
-        
+
+
+    # tohlcv
+    # row[0] = timestamp
+    # row[1] = open
+    # row[2] = high
+    # row[3] = low
+    # row[4] = close
+    # row[5] = volume
     for row in LData:
-        if row['time'] < start_timestamp:
+        # row[0] = timestamp
+        if row[0] < start_timestamp:
             continue
-        
-        if not entry_reached and float(row['low']) <= float(entry):
+                                    # row[3] = low
+        if not entry_reached and float(row[3]) <= float(entry):
             entry_reached.append(row)
 
             if entry_turn < len(entry_price)-1:
@@ -47,8 +46,8 @@ async def findLongOrderStat(stop_loss,entry_price,symbol:Symbol,take_profit,star
                 entry = -float("inf")
 
             continue
-
-        if entry_reached and float(row['low']) <= float(entry):
+                                # row[3] = low
+        if entry_reached and float(row[3]) <= float(entry):
             entry_reached.append(row)
 
             if entry_turn < len(entry_price)-1:
@@ -61,19 +60,17 @@ async def findLongOrderStat(stop_loss,entry_price,symbol:Symbol,take_profit,star
 
             
         if bool(entry_reached):
-            if not bool(stop_loss_reached) and float(row['low']) <= float(stop_loss):
-                
+                                                # row[3] = low
+            if not bool(stop_loss_reached) and float(row[3]) <= float(stop_loss):
                 stop_loss_reached = row
-                keepOn = False
                 break
 
-            if float(row['high']) >= float(tp):
-                
+                # row[2] = high
+            if float(row[2]) >= float(tp):
                 tps.append(row)
                 tp_turn += 1
 
                 if (tp_turn) == len(take_profit):
-                    keepOn = False
                     break
                 tp = take_profit[tp_turn]
         

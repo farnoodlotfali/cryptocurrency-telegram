@@ -1,45 +1,45 @@
-from bingx.api import BingxAPI
-from dotenv import dotenv_values
+from Shared.helpers import load_historic_tohlcv_json, getNowTimestamp, print_colored, save_historic_tohlcv_json
+from Shared.SymbolConverter import SymbolConverter
+from Shared.Exchange import exchange
 
-import sys
-project_path = '../../'  # Adjust this to your actual project path
-sys.path.append(project_path)
-
-from Shared.helpers import load_json, getNowTimestamp, print_colored
-from Shared.saveOHLC_toJson import saveOHLC_toJson
-
-config = dotenv_values(".env")
-
-API_KEY = config["API_KEY"]
-SECRET_KEY = config["SECRET_KEY"]
-
-bingx =  BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
-historic_json_path = "./../historic-json"
 
 async def updateOHLC_FromAPI(start_timestamp, symbolName):
-
-    LData = load_json(f"{historic_json_path}/{symbolName}.json")
+   
+    LData = load_historic_tohlcv_json(symbolName)
 
     keepOn = True
     time_interval = "1m" 
     # 60 * 24 = 1440 minutes in a day
     limit = 1440
     # 86400000 == milliseconds in a day
-    milliSecInDay = 86_400_000    
+    milliSecInDay = 86_400_000  
+
+    # for better analyzing, we will decrease one minute form every times 
     # 60_000 == milliseconds in a minute
     milliSecInMinute = 60_000
 
     allAPIdata = []
 
+    # tohlcv
+    # LData[x][0] = timestamp
+    # LData[x][1] = open
+    # LData[x][2] = high
+    # LData[x][3] = low
+    # LData[x][4] = close
+    # LData[x][5] = volume
+
     # merge json data to api data
     if LData:
         print_colored("LData exists", "#f6cd28")
 
-        first_item_time = LData[0]['time']
-        last_item_time = LData[len(LData)-1]['time']
+        # get first item timestamp of LOADED tohlcv data
+        first_item_time = LData[0][0]
+        # get last item timestamp of LOADED tohlcv data
+        last_item_time = LData[len(LData)-1][0]
+       
 
         # get older data
-        if start_timestamp < ( first_item_time - milliSecInMinute):
+        if start_timestamp < (first_item_time - milliSecInMinute):
             print_colored("get older data","#0ff")
 
             start_timestamp = start_timestamp - milliSecInMinute
@@ -47,14 +47,16 @@ async def updateOHLC_FromAPI(start_timestamp, symbolName):
             next_day = start_timestamp + milliSecInDay
 
             while keepOn:
-                
-                res = bingx.get_kline_data(symbolName, time_interval, start_timestamp, next_day, limit)
-                allAPIdata += list(reversed(res))
+                res = exchange.fetch_ohlcv(symbol=SymbolConverter(symbolName), timeframe=time_interval, limit=limit, since=start_timestamp, params={
+                    'until': next_day
+                })
+                allAPIdata += list(res)
 
                 start_timestamp = next_day
                 next_day = start_timestamp + milliSecInDay
 
-                if allAPIdata[len(allAPIdata)-1]['time'] > end_time:
+                # if last item timestamp of API tohlcv data is bigger than end_time
+                if allAPIdata[len(allAPIdata)-1][0] > end_time:
                     keepOn = False
                     break
                 if len(res) < limit:
@@ -73,8 +75,10 @@ async def updateOHLC_FromAPI(start_timestamp, symbolName):
 
             while keepOn:
                 
-                res = bingx.get_kline_data(symbolName, time_interval, last_item_time, next_day, limit)
-                allAPIdata += list(reversed(res)) 
+                res = exchange.fetch_ohlcv(symbol=SymbolConverter(symbolName), timeframe=time_interval, limit=limit, since=last_item_time, params={
+                    'until': next_day
+                })
+                allAPIdata += list(res) 
 
                 start_timestamp = next_day
                 next_day = start_timestamp + milliSecInDay
@@ -89,8 +93,10 @@ async def updateOHLC_FromAPI(start_timestamp, symbolName):
         start_timestamp = start_timestamp - milliSecInMinute
         next_day = start_timestamp + milliSecInDay 
         while keepOn:
-            res = bingx.get_kline_data(symbolName, time_interval, start_timestamp, next_day, limit)
-            allAPIdata += list(reversed(res)) 
+            res = exchange.fetch_ohlcv(symbol=SymbolConverter(symbolName), timeframe=time_interval, limit=limit, since=start_timestamp, params={
+                'until': next_day
+            })
+            allAPIdata += list(res) 
 
             start_timestamp = next_day
             next_day = start_timestamp + milliSecInDay
@@ -100,5 +106,5 @@ async def updateOHLC_FromAPI(start_timestamp, symbolName):
                 break
 
     if allAPIdata:
-        print_colored("saveOHLC_toJson", "#ada")
-        await saveOHLC_toJson(symbolName, historic_json_path, LData + allAPIdata)
+        print_colored("saving historic tohlcv data to json", "#ada")
+        save_historic_tohlcv_json(symbolName, LData + allAPIdata)

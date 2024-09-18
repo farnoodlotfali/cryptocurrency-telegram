@@ -13,7 +13,6 @@
 - [X] در بررسی تاریچخه سیگنال با کمک ای‌پی‌آی Entry targets (period, date), Take profit (period, date) درست کردن 
 - [X] حذف سیگنال های مشابه
 - [X] حذف سیگنال های خطادار
-- [ ] bingx , Binance محاسبه درصد تفاوت کندل ها در  
 - [ ] سوابق پیش بینی های کانال در مورد ارز جهت باز کردن سفارش برای همون ارز
 - [X] برای هر سیگنال RR محاسبه
 - [ ] add RR min value to have more control on signals
