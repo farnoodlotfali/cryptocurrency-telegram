@@ -7,9 +7,13 @@ from PostAnalyzer.models import (
     EntryTarget,
     Predict,
     TakeProfitTarget,
+    Symbol,
+    Market,
+    PositionSide,
+    MarginMode,
 )
 
-async def findSameSignal(date, symbol, market, position, leverage, margin_mode, stoploss, TPs, entries,channel_id):
+async def findSameSignal(date, symbol: Symbol, market: Market, position: PositionSide, leverage: int, margin_mode: MarginMode, stoploss: float, TPs: list[float], entries: list[float], channel_id):
     two_day_ago = date - timedelta(seconds=172_800)
     
     predict_find = await sync_to_async(list)(Predict.objects.filter(
@@ -18,13 +22,11 @@ async def findSameSignal(date, symbol, market, position, leverage, margin_mode, 
         position__name=position.name,
         margin_mode__name=margin_mode.name,
         leverage=int(leverage),
-        stopLoss=str(stoploss),
-        post__channel_id=channel_id,
-        # date__gt=two_day_ago
-        # date__lt=two_day_ago
+        stopLoss=float(stoploss),
+        post__channel__channel_id=channel_id,
+        # date__gte=two_day_ago
     ).select_related('post', 'status'))
     
-    # print(f"lennnnn {len(predict_find)}")
 
     if predict_find:
 
