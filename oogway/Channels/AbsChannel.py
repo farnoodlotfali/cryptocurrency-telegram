@@ -8,6 +8,7 @@ from PostAnalyzer.models import (
     PositionSide,
     MarginMode
 )
+from Shared.findError import findError
 
 # ****************************************************************************************************************************
 
@@ -60,7 +61,7 @@ class AbsChannel(ABC):
     async def predictParts(self, string, post: Post)-> Optional[Predict]:
         pass 
     
-    async def test(self, msg:str, showPrint:Optional[bool])-> bool:
+    async def test(self, msg:str, showPrint:Optional[bool] = False)-> tuple[bool, str]:
         try:
             isPredict = self.isPredictMsg(msg)
             if not isPredict:
@@ -106,9 +107,16 @@ class AbsChannel(ABC):
             profits = self.findTakeProfits(msg)
             if not profits:
                 raise Exception("Sorry, cannot find Profits")
+            
+            is_error, is_error_message = findError(position.name, profits, entries, stopLoss)
+            if is_error:
+                raise Exception(is_error_message)
+
+            
         except Exception as e:
-            print(e)
-            return False
+            if showPrint: 
+                print(e)
+            return False, str(e)
 
         if showPrint: 
             print(f'isPredict: {isPredict}\nsymbol: {symbol.name}\nmarket: {market.name}')
@@ -117,7 +125,7 @@ class AbsChannel(ABC):
             print(f'stopLoss: {stopLoss}\nentries: {entries}\nprofits: {profits}')
         
 
-        return True
+        return True, ''
     
     @abstractmethod
     async def extract_data_from_message(self, msg:str):
