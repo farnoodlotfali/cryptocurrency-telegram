@@ -7,7 +7,7 @@ from Shared.helpers import load_historic_tohlcv_json
 
 
 async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:Symbol, take_profit: list[float],start_timestamp: int):
-    print(stop_loss,entry_price,symbol,take_profit,start_timestamp)
+    # print(stop_loss,entry_price,symbol,take_profit,start_timestamp)
 
 
     await updateOHLC_FromAPI(start_timestamp, symbol.name)
