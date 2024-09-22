@@ -125,7 +125,7 @@ async def get_user_posts_view(request):
 
 async def channelTestFeyzian(msg):
     p1 = FeyzianChannel()
-    await p1.extract_data_from_message(msg)
+    await p1.extractDataFromMessage(msg)
     
 async def channelTestRastad(msg):
     p1 = RastadMsg()

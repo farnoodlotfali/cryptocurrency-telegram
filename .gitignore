@@ -11,4 +11,6 @@ all_json
 all_csv
 historic-json
 
+errors-in-channel
+
 TA_Lib-0.4.32-cp312-cp312-win_amd64.whl

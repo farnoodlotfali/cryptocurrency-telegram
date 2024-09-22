@@ -2,7 +2,9 @@ from Channels.AbsChannel import AbsChannel
 import re
 from asgiref.sync import sync_to_async
 from telethon.tl.types import Message
-
+from dotenv import dotenv_values
+from typing import Optional
+from datetime import datetime
 from PostAnalyzer.models import (
     Channel,
     EntryTarget,
@@ -16,20 +18,22 @@ from PostAnalyzer.models import (
     PositionSide,
     MarginMode
 )
-from Shared.helpers import returnSearchValue
+from Shared.helpers import returnSearchValue, print_colored, subtractTime
 from Shared.Exchange import exchange
 from Shared.SymbolConverter import SymbolConverter
-from Shared.findError import findError
 from Shared.findRiskToReward import findRiskToReward
 from Shared.findSameSignal import findSameSignal
-from typing import Optional
-
+from Shared.findShortOrderStat import findShortOrderStat
+from Shared.findLongOrderStat import findLongOrderStat
 
 # ****************************************************************************************************************************
 
+_config = dotenv_values(".env")
+# abs ==> abstract
 class FeyzianChannel(AbsChannel):
-    
-    # determine if a message is a predict message or not
+    _channel_id = _config["CHANNEL_FEYZ"]
+
+    # abs
     def isPredictMsg(self, msg)->bool:
         patterns = [
         r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
@@ -42,6 +46,7 @@ class FeyzianChannel(AbsChannel):
         # Check if all patterns have a value
         return all(re.search(pattern, msg, re.IGNORECASE) for pattern in patterns)
 
+    # abs
     async def findSymbol(self, msg)-> Optional[Symbol]:
         symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
         
@@ -50,6 +55,7 @@ class FeyzianChannel(AbsChannel):
         except:
             return None
         
+    # abs
     async def findMarket(self, msg)-> Optional[Market]:
         market_match = re.search(r"Market:\s*([A-Z]+)", msg, re.IGNORECASE)
         
@@ -59,6 +65,7 @@ class FeyzianChannel(AbsChannel):
         except:
             return None
 
+    # abs
     async def findPosition(self, msg)-> Optional[PositionSide]:
         position_match = re.search(r"Position:\s*([A-Z]+)", msg)
         
@@ -68,6 +75,7 @@ class FeyzianChannel(AbsChannel):
         except:
             return None
     
+    # abs
     async def findLeverageAndMarginMode(self, msg)-> tuple[Optional[MarginMode], Optional[int]]:
         leverage_match = re.search(r"Leverage:\s*(Isolated|Cross)\s*(\d+x)", msg, re.IGNORECASE)
         if leverage_match:
@@ -79,11 +87,13 @@ class FeyzianChannel(AbsChannel):
         
         return margin_mode, leverage_value
     
+    # abs
     def findStopLoss(self, msg)-> Optional[float]:
         msg = msg.replace(",","")
 
         return float(returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg)))
 
+    # abs
     def findEntryTargets(self, msg)-> Optional[list[float]]:
         msg = msg.replace(",","")
         match = re.search(r"Entry Targets:([\s\S]+?)Take-Profit", msg, re.IGNORECASE)
@@ -93,6 +103,7 @@ class FeyzianChannel(AbsChannel):
             extracted_data = returnSearchValue(final)
             return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data))  if i % 2 == 1]
     
+    # abs
     def findTakeProfits(self, msg)-> Optional[list[float]]:
         msg = msg.replace(",","")
         match = re.search(r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)", msg, re.IGNORECASE)
@@ -100,17 +111,12 @@ class FeyzianChannel(AbsChannel):
             extracted_data = returnSearchValue(match)
             return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data)) if i % 2 == 1]
             
-    # Check if post is a Cancel predict or not
+    # abs
     async def isCancel(self, post:Post)-> bool:
         if post is None or post.reply_to_msg_id is None:
             return False
         
         try:
-            # cancel_before_patterns = [
-            #     r"Cancelled",
-            #     r"achieved",
-            #     r"entering",
-            # ]
             manually_cancel_patterns = [
                 r"Cancelled",
                 r"Manually",
@@ -118,7 +124,6 @@ class FeyzianChannel(AbsChannel):
             cancel_pattern =[
                 r"کنسل"
             ]
-
 
             # check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_before_patterns)
             check1 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in manually_cancel_patterns)
@@ -145,8 +150,31 @@ class FeyzianChannel(AbsChannel):
             # error_msg.append(model_to_dict(post))
             return False
 
+    # cancel order in exchange
+    async def cancelOrderEx(self, post:Post)-> bool:
+        if post is None or post.reply_to_msg_id is None:
+            return False
+        
+        try:
+            predict = await sync_to_async(
+            lambda: Predict.objects.select_related('symbol', 'market').get(post__message_id=post.reply_to_msg_id)
+            )()
+            
+            res = exchange.cancel_order(symbol=SymbolConverter(predict.symbol.name, predict.market.name), id=predict.order_id)
+            print(res)
+        
+            return True
+                
+        except Exception as e:
+            # print( e)
+            super().handleError(post, f"error in cancelOrderEx method, {str(e)}", post.channel.name)
+         
+            return False
 
-    # find important parts of a predict message such as symbol or entry point
+
+
+
+    # abs
     async def predictParts(self, string, post:Post)-> Optional[Predict]:
         if string is None or post is None:
             return None
@@ -183,19 +211,12 @@ class FeyzianChannel(AbsChannel):
         # take_profit targets
         take_profit_targets_value = self.findTakeProfits(string)
 
-
-        # is_error = findError(position_value.name, take_profit_targets_value, entry_targets_value, stopLoss_value)
-        # if is_error:
-        #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
-
-
         # return Error RR < 0.2
         # TODO will add to setting, to get min RR
-        RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
+        # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
         
-        if RR < 0.2 or RR > 4:
-            status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
-    
+        # if RR < 0.2 or RR > 4:
+        #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
 
         # TODO check post.channel.id
         # return false if signal already exists
@@ -320,8 +341,11 @@ class FeyzianChannel(AbsChannel):
     #     # error_msg.append(model_to_dict(post))
     #     return None
     
-    # main method
-    async def extract_data_from_message(self, message):
+
+
+    #abs, main method
+    async def extractDataFromMessage(self, message):
+        
         if isinstance(message, Message):
             is_predict_msg = self.isPredictMsg(message.message)
             channel = await sync_to_async(Channel.objects.get)(
@@ -346,7 +370,221 @@ class FeyzianChannel(AbsChannel):
                 await self.predictParts(message.message, post)
             # cancel msg
             elif await self.isCancel(post):
-                pass
+                await self.cancelOrderEx(post)
+                
+                
             return PostData
         else:
             return None 
+        
+
+    # ****************************************************************************************************************************
+    # ******************************************** statistics methods ************************************************************
+    # ****************************************************************************************************************************
+
+    # abs
+    async def statistic_PredictParts(self, string, post:Post):
+        if string is None or post is None:
+            return None
+        
+        try:
+            should_check = True
+
+            # symbol
+            symbol_value = await self.findSymbol(string)
+            
+            # market
+            market_value= await self.findMarket(string)
+            isSpot = market_value.name == "SPOT"
+
+            # position, leverage, marginMode
+            position_value = None
+            leverage_value = None
+            marginMode_value = None
+            if not isSpot:
+                position_value = await self.findPosition(string)
+                marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
+            else:
+                position_value= await sync_to_async(PositionSide.objects.get)(name="BUY")
+            
+            # stopLoss
+            stopLoss_value = self.findStopLoss(string)
+
+            # entry targets
+            entry_targets_value = self.findEntryTargets(string)
+
+            # status    
+            status_value = await sync_to_async(PostStatus.objects.get)(name="PENDING")
+
+            # take_profit targets
+            take_profit_targets_value = self.findTakeProfits(string)
+            
+            # return Error RR < 0.2
+            # TODO will add to setting, to get min RR. and it should be implement in findError method or test method in AbsChannel class
+            # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
+            
+            # if RR < 0.2 or RR > 4:
+            #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
+            #     should_check = False
+            
+            # return false if signal already exists
+            is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
+                                        take_profit_targets_value,entry_targets_value,post.channel.channel_id)
+            if is_same_signal:
+                return False
+            
+            print(symbol_value.name, position_value.name)
+            isSHORT = position_value.name == "SHORT"
+            first_entry_value = entry_targets_value[0]
+            
+            if should_check:
+                if not isSHORT:
+                    stat = await findLongOrderStat(stop_loss=stopLoss_value,
+                                    entry_price=entry_targets_value,
+                                    symbol=symbol_value,
+                                    take_profit=take_profit_targets_value,
+                                    start_timestamp= int(post.date.timestamp() * 1000))
+                elif isSHORT:
+                    stat = await findShortOrderStat(stop_loss=stopLoss_value,
+                                    entry_price=entry_targets_value,
+                                    symbol=symbol_value,
+                                    take_profit=take_profit_targets_value,
+                                    start_timestamp= int(post.date.timestamp() * 1000))
+            else:
+                stat = {"tps": [], "entry_reached": [], "stop_loss_reached": None}
+                
+            print(stat)
+            # stat['name'] = f'{symbol_value.name}, {position_value.name}'
+            print_colored("********************************************************************************************************************","#0f0")
+            tps_length = len(stat['tps'])
+            profit_value = 0
+
+            if stat['stop_loss_reached']:
+                if tps_length > 0:
+                    status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED WITH PROFIT", type=tps_length)
+                else:
+                    status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED")
+                profit_value = round(((float(stopLoss_value)/float(first_entry_value))-1)*100*float(leverage_value) * (-1 if isSHORT else 1), 5)
+            else:
+                if tps_length == len(take_profit_targets_value):
+                    status_value = await sync_to_async(PostStatus.objects.get)(name="FULLTARGET")
+                    profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
+
+                elif tps_length > 0:
+                    status_value = await sync_to_async(PostStatus.objects.get)(name="SUCCESS", type=tps_length)
+                    profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
+                
+
+            # set predict object to DB
+            PredictData = {
+                "post": post,
+                "date": post.date,
+                "symbol": symbol_value,
+                "position": position_value,
+                "market": market_value,
+                "leverage": leverage_value,
+                "stopLoss": stopLoss_value,
+                "margin_mode": marginMode_value,
+                "profit": profit_value,
+                "status": status_value, 
+                "order_id": None,
+            }
+            newPredict = Predict(**PredictData)
+
+            # set entry value objects to DB
+            if entry_targets_value:
+                entriesLen = len(stat['entry_reached'])
+                for i, value in enumerate(entry_targets_value):
+                    isActive = i < entriesLen 
+                    date = None
+                    period = None
+                    if isActive:
+                        time = int(stat['entry_reached'][i][0])
+                        date = datetime.fromtimestamp(time/ 1000)
+                        period = subtractTime(time, int(post.date.timestamp() * 1000))
+                    entryData = EntryTarget(
+                        **{
+                            "post": post,
+                            "index": i,
+                            "value": value,
+                            "active": isActive,
+                            "period": period,
+                            "date": date,
+                        }
+                    )
+                    await sync_to_async(entryData.save)()
+            
+            # # set tp value objects to DB
+            if take_profit_targets_value:
+                tpLen = len(stat['tps'])
+
+                for i, value in enumerate(take_profit_targets_value):
+                    isActive = i < tpLen 
+                    date = None
+                    period = None
+                    if isActive:
+                        time = int(stat['tps'][i][0])
+                        date = datetime.fromtimestamp(time/ 1000)
+                        period = subtractTime(time, int(post.date.timestamp() * 1000))
+
+                    takeProfitData = TakeProfitTarget(
+                        **{
+                            "post": post,
+                            "index": i,
+                            "value": value,
+                            "active": isActive,
+                            "period": period,
+                            "profit": round(abs(((value/first_entry_value)-1)*100*leverage_value), 5),
+                            "date": date,
+                        }
+                    )
+                    await sync_to_async(takeProfitData.save)()
+
+
+            await sync_to_async(newPredict.save)()
+            return newPredict
+        except:
+            super().handleError(post, "error in statisticPredictParts method", post.channel.name)
+            return False
+        
+    # abs
+    async def statistic_extractDataFromMessage(self, message):
+        if isinstance(message, Message):
+            is_predict_msg = self.isPredictMsg(message.message)
+            channel = await sync_to_async(Channel.objects.get)(
+                channel_id=message.peer_id.channel_id
+            )
+            PostData = {
+                "channel": channel if channel else None,
+                "date": message.date,
+                "message_id": message.id,
+                "message": message.message,
+                "reply_to_msg_id": message.reply_to.reply_to_msg_id
+                if message.reply_to
+                else None,
+                "edit_date": message.edit_date,
+                "is_predict_msg": is_predict_msg,
+            }
+            post = Post(**PostData)
+
+            await sync_to_async(post.save)()
+        
+            # # predict msg
+            if is_predict_msg:
+                # testing predicted msg
+                test_res, error_message = await self.test(message.message)
+                if test_res:
+                    await self.statistic_PredictParts(message.message, post)
+                else:
+                    super().handleError(post, error_message, channel.name)
+
+            # # cancel msg
+            elif await self.isCancel(post):
+                pass
+        
+                
+            return PostData
+        else:
+            return None
+
+  
