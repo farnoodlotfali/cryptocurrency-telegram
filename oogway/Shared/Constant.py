@@ -1,0 +1,10 @@
+from enum import Enum
+
+class PostStatusValues(Enum):
+    FAILED_WITH_PROFIT = 'FAILED WITH PROFIT'
+    SUCCESS = 'SUCCESS'
+    FULLTARGET = 'FULLTARGET'
+    FAILED = 'FAILED'
+    CANCELED = 'CANCELED'
+    PENDING = 'PENDING'
+    ERROR = 'ERROR'
