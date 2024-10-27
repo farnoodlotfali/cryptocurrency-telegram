@@ -26,11 +26,20 @@ from django.forms.models import model_to_dict
 from django import template
 from Shared.Exchange import exchange
 from Shared.SymbolConverter import SymbolConverter
+from django.template import RequestContext
 
 config = dotenv_values(".env")
 API_KEY = config["API_KEY"]
 SECRET_KEY = config["SECRET_KEY"]
 bingx = BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
+
+LOGIN_PAGE_URL = "/panel/login"
+
+
+
+# HTTP Error 404
+def custom_404_view(request, exception):
+    return render(request, '404.html', status=404)
 
 def get_posts_api(request):
     posts = Post.objects.all()  # Fetch all posts from the database
@@ -46,7 +55,7 @@ def get_symbols_api(request):
     return JsonResponse(data, safe=False)
 
 
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def home(request):
     channels = Channel.objects.all()
     predicts = Predict.objects.all()
@@ -74,21 +83,21 @@ class CustomLoginView(LoginView):
 
 
 # symbols
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def get_symbols(request):
     symbols = Symbol.objects.all()
     return render(request, "Symbol/index.html", {"symbols": symbols})
 
 
 # markets
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def get_markets(request):
     markets = Market.objects.all()
     return render(request, "Market/index.html", {"markets": markets})
 
 
 # predicts
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def get_predicts(request):
     predicts = Predict.objects.all()
     symbol_param = request.GET.get("symbol")
@@ -133,14 +142,14 @@ def get_predicts(request):
 
 
 # channels
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def channel_list(request):
     channels = Channel.objects.all()
     return render(request, "Channel/channelList.html", {"channels": channels})
 
 
 # channels
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def change_channel_trade(request, channel_id):
     channel = Channel.objects.get(channel_id=channel_id)
     channel.can_trade = not channel.can_trade
@@ -149,21 +158,21 @@ def change_channel_trade(request, channel_id):
 
 
 # channel detail
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def channel_detail(request, channel_id):
     channel = get_object_or_404(Channel, channel_id=channel_id)
     return render(request, "Channel/channelDetail.html", {"channel": channel})
 
 
 # posts list
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def post_list(request):
     posts = Post.objects.all().order_by("-id")
     return render(request, "Post/postList.html", {"posts": posts})
 
 
 # post detail
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def post_detail(request, post_id):
     post = Post.objects.get(pk=post_id)
 
@@ -191,7 +200,7 @@ def post_detail(request, post_id):
 
 
 # post detail
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def save_coins_from_api(request):
     order_data = bingx.get_all_contracts()
 
@@ -215,7 +224,7 @@ def save_coins_from_api(request):
 
 
 # cancel order
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def cancel_order(request, symbol, order_id=None, market=None):
     # try:
     #     res = bingx.cancel_order(symbol,order_id, order_id)
@@ -242,7 +251,7 @@ def cancel_order(request, symbol, order_id=None, market=None):
     return redirect("Panel:predict")
 
 # change predict status
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def change_predict_status(request, predict_id, status):
     try:
         predict = Predict.objects.get(pk=predict_id)
@@ -448,13 +457,13 @@ def tp_index_chart(request):
     return JsonResponse(tp_index_stat(request))
 
 # settings
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def get_settings(request):
     setting = SettingConfig.objects.get(id=1)
     return render(request, "Settings/index.html", {"setting": setting})
 
 
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def update_settings(request):
     settings = SettingConfig.objects.get(id=1)
     max_leverage_param = float(request.POST.get("max_leverage"))
@@ -471,7 +480,7 @@ def update_settings(request):
 
 
 # statistic
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def get_statistic(request):
     positions = PositionSide.objects.all()
     channels = Channel.objects.all()
@@ -618,7 +627,7 @@ async def set_phone_number(phone_number,token):
             
     # me = await client.get_me()
 
-@login_required(login_url="login")
+@login_required(login_url=LOGIN_PAGE_URL)
 def getPhoneNumberAndCode(request):
     phone_number_param = request.POST.get("phone_number")
     token_param = request.POST.get("token")

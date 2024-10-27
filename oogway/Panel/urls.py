@@ -1,9 +1,13 @@
 from django.contrib.auth.views import LogoutView
 from django.urls import path
-
+from django.conf.urls import (
+handler400, handler403, handler404, handler500
+)
 from . import views
 
 app_name = "Panel"
+
+handler404 = 'Panel.views.custom_404_view'
 
 urlpatterns = [
     path(
