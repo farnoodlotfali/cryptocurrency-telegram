@@ -9,6 +9,13 @@ class Channel(models.Model):
     def __str__(self):
         return f"{self.name} {self.channel_id}"
 
+class Market(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=20, editable=True)
+
+    def __str__(self):
+        return f"{self.name}"
+    
 
 class Symbol(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -17,15 +24,9 @@ class Symbol(models.Model):
     fee_rate = models.CharField(max_length=20, editable=True, null=True)
     currency = models.CharField(max_length=20, editable=True, null=True)
     asset = models.CharField(max_length=20, editable=True, null=True)
-
-    def __str__(self):
-        return f"{self.name}"
-
-
-class Market(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=20, editable=True)
-
+    exchange = models.CharField(max_length=20, editable=True, null=True)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True)
+    
     def __str__(self):
         return f"{self.name}"
 
