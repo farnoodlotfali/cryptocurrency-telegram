@@ -39,7 +39,7 @@ class AbsChannel(ABC):
     
     # find symbol
     @abstractmethod
-    async def findSymbol(self, msg:str)-> Optional[Symbol]:
+    async def findSymbol(self, msg:str, market:Market)-> Optional[Symbol]:
         pass
     
     # find market
@@ -88,16 +88,15 @@ class AbsChannel(ABC):
             if not isPredict:
                 raise Exception("Sorry, this msg is not Predict Message")
 
-            # # ************* FIND SYMBOL *************
-            symbol = await self.findSymbol(msg)
-            if not symbol:
-                raise Exception("Sorry, cannot find Symbol")
-
-
             # # ************* FIND MARKET *************
             market = await self.findMarket(msg)
             if not market:
                 raise Exception("Sorry, cannot find Market")
+            
+            # # ************* FIND SYMBOL *************
+            symbol = await self.findSymbol(msg, market)
+            if not symbol:
+                raise Exception("Sorry, cannot find Symbol")
 
             if market.name != "SPOT":
                 # ************* FIND POSITION *************
@@ -129,7 +128,7 @@ class AbsChannel(ABC):
             if not profits:
                 raise Exception("Sorry, cannot find Profits")
             
-            is_error, is_error_message = findError(position.name, profits, entries, stopLoss)
+            is_error, is_error_message = findError(position.name if market.name != "SPOT" else "BUY", profits, entries, stopLoss)
             if is_error:
                 raise Exception(is_error_message)
 

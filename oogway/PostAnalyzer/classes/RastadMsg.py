@@ -87,7 +87,7 @@ class RastadMsg:
 
         # symbol
         symbol_match = string[string.find("#") + 1 : string.find("/USDT")].strip().split("USDT")[0].replace("/", "")
-        symbol_value = await sync_to_async(Symbol.objects.get)(asset=symbol_match)
+        symbol_value = await sync_to_async(Symbol.objects.get)(base=symbol_match)
 
         # position
         position_match = self.findPosition(string)

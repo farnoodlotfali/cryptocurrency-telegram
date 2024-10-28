@@ -47,11 +47,11 @@ class FeyzianChannel(AbsChannel):
         return all(re.search(pattern, msg, re.IGNORECASE) for pattern in patterns)
 
     # abs
-    async def findSymbol(self, msg)-> Optional[Symbol]:
+    async def findSymbol(self, msg, market)-> Optional[Symbol]:
         symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
         
         try:
-            return await sync_to_async(Symbol.objects.get)(asset=returnSearchValue(symbol).upper())
+            return await sync_to_async(Symbol.objects.get)(base=returnSearchValue(symbol).upper(), market=market)
         except:
             return None
         
@@ -90,8 +90,9 @@ class FeyzianChannel(AbsChannel):
     # abs
     def findStopLoss(self, msg)-> Optional[float]:
         msg = msg.replace(",","")
+        stoploss = returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg))
 
-        return float(returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg)))
+        return float(stoploss if stoploss else 'inf')
 
     # abs
     def findEntryTargets(self, msg)-> Optional[list[float]]:
@@ -182,12 +183,12 @@ class FeyzianChannel(AbsChannel):
     # try:
         settings = await sync_to_async(SettingConfig.objects.get)(id=1)
     
-        # symbol
-        symbol_value = await self.findSymbol(string)
-
         # market
         market_value= await self.findMarket(string)
         isSpot = market_value.name == "SPOT"
+
+        # symbol
+        symbol_value = await self.findSymbol(string, market_value)
 
         # position, leverage, marginMode
         position_value = None
@@ -390,12 +391,12 @@ class FeyzianChannel(AbsChannel):
         try:
             should_check = True
 
-            # symbol
-            symbol_value = await self.findSymbol(string)
-            
             # market
             market_value= await self.findMarket(string)
             isSpot = market_value.name == "SPOT"
+
+            # symbol
+            symbol_value = await self.findSymbol(string, market_value)
 
             # position, leverage, marginMode
             position_value = None

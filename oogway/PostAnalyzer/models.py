@@ -19,12 +19,11 @@ class Market(models.Model):
 
 class Symbol(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=20, editable=True)
-    size = models.CharField(max_length=20, editable=True, null=True)
-    fee_rate = models.CharField(max_length=20, editable=True, null=True)
-    currency = models.CharField(max_length=20, editable=True, null=True)
-    asset = models.CharField(max_length=20, editable=True, null=True)
-    exchange = models.CharField(max_length=20, editable=True, null=True)
+    name = models.CharField(max_length=40, editable=True)
+    min_trade_amount = models.CharField(max_length=20, editable=True, null=True)
+    quote = models.CharField(max_length=20, editable=True, null=True)
+    base = models.CharField(max_length=20, editable=True, null=True)
+    # exchange = models.CharField(max_length=20, editable=True, null=True)
     market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True)
     
     def __str__(self):

@@ -128,7 +128,7 @@ class AliBeyranvand:
         symbol_match = (
             returnSearchValue(symbol_match).strip().replace("/", "").split("USDT")[0]
         )
-        symbol_value = await sync_to_async(Symbol.objects.get)(asset=symbol_match)
+        symbol_value = await sync_to_async(Symbol.objects.get)(base=symbol_match)
 
         # position
         position_match = "Buy" if isSpot else self.findPosition(string)
