@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Symbols</title>
-
+    {% include 'Components/favIconTag.html' %}
     <!-- Font Awesome -->
     <link
       rel="stylesheet"
@@ -56,10 +56,10 @@
                         <tr>
                           <th scope="col">Id</th>
                           <th scope="col">Name</th>
-                          <th scope="col">Size (min price effect)</th>
-                          <th scope="col">Fee Rate</th>
-                          <th scope="col">Currency</th>
-                          <th scope="col">Asset</th>
+                          <th scope="col">Min Trade Amount</th>
+                          <th scope="col">Quote</th>
+                          <th scope="col">Base</th>
+                          <th scope="col">Market</th>
                           <th scope="col">Actions</th>
                         </tr>
                       </thead>
@@ -76,19 +76,19 @@
                           </th>
                           <th>
                             <!-- size -->
-                            {{symbol.size}}
+                            {{symbol.min_trade_amount}}
                           </th>
                           <th>
-                            <!-- fee_rate -->
-                            {{symbol.fee_rate}}
+                            <!-- Quote -->
+                            {{symbol.quote}}
                           </th>
                           <th>
-                            <!-- Currency -->
-                            {{symbol.currency}}
-                          </th>
+                            <!-- base -->
+                            {{symbol.base}}
+                          </th> 
                           <th>
-                            <!-- asset -->
-                            {{symbol.asset}}
+                            <!-- market -->
+                            {{symbol.market.name}}
                           </th>
                           <th>
                             <!-- actions -->
@@ -107,10 +107,10 @@
                         <tr>
                           <th scope="col">Id</th>
                           <th scope="col">Name</th>
-                          <th scope="col">Size (min price effect)</th>
-                          <th scope="col">Fee Rate</th>
-                          <th scope="col">Currency</th>
-                          <th scope="col">Asset</th>
+                          <th scope="col">Min Trade Amount</th>
+                          <th scope="col">Quote</th>
+                          <th scope="col">Base</th>
+                          <th scope="col">Market</th>
                           <th scope="col">Actions</th>
                         </tr>
                       </tfoot>

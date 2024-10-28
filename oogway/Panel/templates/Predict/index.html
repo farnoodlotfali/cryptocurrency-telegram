@@ -8,6 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Predicts</title>
+    {% include 'Components/favIconTag.html' %}
 
     <!-- Font Awesome -->
     <link
@@ -341,35 +342,6 @@
           .container()
           .appendTo("#example1_wrapper .col-md-6:eq(0)");
       });
-
-      // function changeStatus(e,id) {
-      //   $.ajax({
-      //       url: `/panel/change-predict-status/${id}/${e.value}/`,
-      //       dataType: "json",
-      //       success: function (response) {
-             
-      //       },
-      //       error: function (xhr, errmsg, err) {
-      //         console.log(xhr.status + ": " + xhr.responseText);
-      //       },
-      //     });
-      // }
-      
-      function cancelOrder(symbol,order_id) {
-        $.ajax({
-            url: `cancel-order-api/${symbol}/${order_id}/`, // URL mapped to the get_posts view
-            dataType: "json",
-            success: function (response) {
-              // Handle the successful response
-              // Do something with the posts data, e.g., display it on the page
-            },
-            error: function (xhr, errmsg, err) {
-              // Handle any errors
-              console.log(xhr.status + ": " + xhr.responseText);
-            },
-          });
-      }
-
     </script>
     
   </body>
