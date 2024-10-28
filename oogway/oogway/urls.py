@@ -7,6 +7,7 @@ from django.conf import settings
 urlpatterns = [
     path('analyze/', include('PostAnalyzer.urls')),
     path('panel/', include('Panel.urls')),
+    path('exchange/', include('exchange.urls')),
     path('admin/', admin.site.urls),
 ]
 

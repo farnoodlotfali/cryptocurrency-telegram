@@ -38,6 +38,7 @@ LOGIN_PAGE_URL = "/panel/login"
 
 
 # HTTP Error 404
+@login_required(login_url=LOGIN_PAGE_URL)
 def custom_404_view(request, exception):
     return render(request, '404.html', status=404)
 
@@ -199,45 +200,10 @@ def post_detail(request, post_id):
     )
 
 
-# post detail
-@login_required(login_url=LOGIN_PAGE_URL)
-def save_coins_from_api(request):
-    order_data = bingx.get_all_contracts()
-
-    for symbol in order_data:
-        if symbol["currency"] == "USDT":
-        # print(symbol["currency"])
-            newSymbol = {
-                "name": symbol["symbol"],
-                "size": symbol["size"],
-                "fee_rate": symbol["feeRate"],
-                "currency": symbol["currency"],
-                "asset": symbol["asset"],
-            }
-            newSymbol = Symbol(**newSymbol)
-
-            newSymbol.save()
-
-    # data = serializers.serialize("json", order_data)
-
-    # return JsonResponse(data, safe=False)
-
 
 # cancel order
 @login_required(login_url=LOGIN_PAGE_URL)
 def cancel_order(request, symbol, order_id=None, market=None):
-    # try:
-    #     res = bingx.cancel_order(symbol,order_id, order_id)
-    #     # res = bingx.cancel_all_orders_of_symbol(symbol)
-    #     predict = Predict.objects.get(order_id=order_id)
-    #     cancelStatus = PostStatus.objects.get(name="CANCELED")
-    #     predict.status = cancelStatus
-    #     print(111)
-    #     print(res)
-    #     predict.save()
-    # except:
-    #     print("error")
-
     try:
         exchange.cancel_order(id=order_id,symbol=SymbolConverter(symbol, market))
         predict = Predict.objects.get(order_id=order_id)

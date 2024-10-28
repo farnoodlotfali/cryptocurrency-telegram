@@ -29,7 +29,6 @@ urlpatterns = [
     path("settings/", views.get_settings, name="settings"),
     path("statistic/", views.get_statistic, name="statistic"),
     path("settings/update", views.update_settings, name="update_settings"),
-    path("save-coins/", views.save_coins_from_api, name="save_coins_from_api"),
     path(
         "change-channel-trade/<int:channel_id>",
         views.change_channel_trade,

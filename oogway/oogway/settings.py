@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'PostAnalyzer',
     'Panel',
+    'exchange',
 ]
 
 MIDDLEWARE = [
