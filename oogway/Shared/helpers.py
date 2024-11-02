@@ -22,6 +22,18 @@ class DateTimeEncoder(json.JSONEncoder):
             return o  # Return Persian text as is without encoding
 
         return json.JSONEncoder.default(self, o)
+    
+
+def rootConvertToJsonFile(data, name, folder_name):
+    # Ensure the folder exists
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+   
+    # Use os.path.join to construct the full path
+    file_path = os.path.join(folder_name, f"{name}.json")
+    
+    with open(file_path, "w", encoding="utf-8") as outfile:
+        json.dump(data, outfile, cls=DateTimeEncoder, ensure_ascii=False)
         
 # convert to json file
 def convertToJsonFile(data, name, folder_name):
@@ -79,19 +91,14 @@ def getNowTimestamp():
     return int(now * 1000)
 
 
-# load data of tohlcv / Timestamp, Open, High, Low, Close, Volume
-def load_historic_tohlcv_json(symbolName:str)-> list[any]:
-    return load_json(f"./../historic-json/{symbolName}.json")
+def addDaysToMilliTimeStamp(time:int, days:int)->int:
 
-# save data of tohlcv to json / Timestamp, Open, High, Low, Close, Volume
-def save_historic_tohlcv_json(symbolName, data):
-    unique_data = {item[0]: item for item in data}
+    time = time / 1000
+   
+    original_datetime = datetime.fromtimestamp(time)
 
-    # Convert the dictionary back to a list of lists
-    unique_data_list = list(unique_data.values())
+    new_datetime = original_datetime + timedelta(days=days)
 
-    # Sort by the first element (timestamp) if needed
-    unique_data_list.sort(key=lambda x: x[0])
-    
-    convertToJsonFile(unique_data_list, symbolName, './../historic-json') 
+    new_time = int(new_datetime.timestamp() * 1000)
+    return new_time
 
