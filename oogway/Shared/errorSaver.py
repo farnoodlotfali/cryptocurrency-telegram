@@ -1,7 +1,8 @@
-from Shared.helpers import convertToJsonFile, load_json
+from Shared.helpers import rootConvertToJsonFile, load_json
 from typing import Optional
+import os
 
-_error_path_folder = '../errors-in-channel'
+_error_path_folder = os.path.join(os.path.dirname(__file__), "../errors-in-channel")
 
 def errorSaver(data, channel_name: Optional[str] = None):
     filename = channel_name if channel_name else "general"
@@ -9,4 +10,4 @@ def errorSaver(data, channel_name: Optional[str] = None):
 
     loaded_data.append(data)
 
-    convertToJsonFile(loaded_data, filename, _error_path_folder) 
+    rootConvertToJsonFile(loaded_data, filename, _error_path_folder) 
