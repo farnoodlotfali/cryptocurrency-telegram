@@ -25,7 +25,6 @@ import datetime
 from django.forms.models import model_to_dict
 from django import template
 from Shared.Exchange import exchange
-from Shared.SymbolConverter import SymbolConverter
 from django.template import RequestContext
 
 config = dotenv_values(".env")
@@ -205,11 +204,12 @@ def post_detail(request, post_id):
 @login_required(login_url=LOGIN_PAGE_URL)
 def cancel_order(request, symbol, order_id=None, market=None):
     try:
-        exchange.cancel_order(id=order_id,symbol=SymbolConverter(symbol, market))
-        predict = Predict.objects.get(order_id=order_id)
-        cancelStatus = PostStatus.objects.get(name="CANCELED")
-        predict.status = cancelStatus
-        predict.save()
+        # exchange.cancel_order(id=order_id,symbol=SymbolConverter(symbol, market))
+        # predict = Predict.objects.get(order_id=order_id)
+        # cancelStatus = PostStatus.objects.get(name="CANCELED")
+        # predict.status = cancelStatus
+        # predict.save()
+        pass
     except:
         print("error")
     # data = serializers.serialize("json", order_data)

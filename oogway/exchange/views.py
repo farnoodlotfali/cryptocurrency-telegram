@@ -45,7 +45,7 @@ def save_symbols(request):
 def cancel_order(request, symbol, order_id=None, market=None):
     print(symbol, order_id, market)
     # try:
-    #     exchange.cancel_order(id=order_id,symbol=SymbolConverter(symbol, market))
+    #     exchange.cancel_order(id=order_id,symbol=symbol)
     #     predict = Predict.objects.get(order_id=order_id)
     #     cancelStatus = PostStatus.objects.get(name="CANCELED")
     #     predict.status = cancelStatus
