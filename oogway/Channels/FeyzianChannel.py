@@ -1,6 +1,5 @@
 from Channels.AbsChannel import AbsChannel
 import re
-from asgiref.sync import sync_to_async
 from telethon.tl.types import Message
 from dotenv import dotenv_values
 from typing import Optional
@@ -20,11 +19,11 @@ from PostAnalyzer.models import (
 )
 from Shared.helpers import returnSearchValue, print_colored, subtractTime
 from Shared.Exchange import exchange
-from Shared.SymbolConverter import SymbolConverter
-from Shared.findRiskToReward import findRiskToReward
 from Shared.findSameSignal import findSameSignal
 from Shared.findShortOrderStat import findShortOrderStat
 from Shared.findLongOrderStat import findLongOrderStat
+from Shared.types import Stat
+from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValues, MarketValues
 
 # ****************************************************************************************************************************
 
@@ -51,7 +50,7 @@ class FeyzianChannel(AbsChannel):
         symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
         
         try:
-            return await sync_to_async(Symbol.objects.get)(base=returnSearchValue(symbol).upper(), market=market)
+            return await Symbol.objects.aget(base=returnSearchValue(symbol).upper(), market=market)
         except:
             return None
         
@@ -60,7 +59,7 @@ class FeyzianChannel(AbsChannel):
         market_match = re.search(r"Market:\s*([A-Z]+)", msg, re.IGNORECASE)
         
         try:
-            market_value = await sync_to_async(Market.objects.get)(name=returnSearchValue(market_match).upper())
+            market_value = await Market.objects.aget(name=returnSearchValue(market_match).upper())
             return market_value
         except:
             return None
@@ -70,7 +69,7 @@ class FeyzianChannel(AbsChannel):
         position_match = re.search(r"Position:\s*([A-Z]+)", msg)
         
         try:
-            position_value = await sync_to_async(PositionSide.objects.get)(name=returnSearchValue(position_match).upper())
+            position_value = await PositionSide.objects.aget(name=returnSearchValue(position_match).upper())
             return position_value
         except:
             return None
@@ -79,7 +78,7 @@ class FeyzianChannel(AbsChannel):
     async def findLeverageAndMarginMode(self, msg)-> tuple[Optional[MarginMode], Optional[int]]:
         leverage_match = re.search(r"Leverage:\s*(Isolated|Cross)\s*(\d+x)", msg, re.IGNORECASE)
         if leverage_match:
-            margin_mode = await sync_to_async(MarginMode.objects.get)(name=returnSearchValue(leverage_match).upper())   
+            margin_mode = await MarginMode.objects.aget(name=returnSearchValue(leverage_match).upper())
             leverage_value = int(leverage_match.group(2).lower().replace("x",""))    
         else:
             margin_mode = None
@@ -129,19 +128,17 @@ class FeyzianChannel(AbsChannel):
             # check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_before_patterns)
             check1 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in manually_cancel_patterns)
             check2 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_pattern)
-            
-            if check1 or check2 :
+         
+            if check1 or check2:
                 
-                predict = await sync_to_async(Predict.objects.get)(
-                    post__message_id=post.reply_to_msg_id
-                )
+                predict = await Predict.objects.aget(post__message_id=post.reply_to_msg_id)
                 
-                status_value = await sync_to_async(PostStatus.objects.get)(name="CANCELED")
+                status_value = await PostStatus.objects.aget(name=PostStatusValues.CANCELED.value)
             
                 predict.status = status_value
                 predict.profit = 0
             
-                await sync_to_async(predict.save)()
+                await predict.asave()
                 return True
                 
             else:
@@ -157,11 +154,8 @@ class FeyzianChannel(AbsChannel):
             return False
         
         try:
-            predict = await sync_to_async(
-            lambda: Predict.objects.select_related('symbol', 'market').get(post__message_id=post.reply_to_msg_id)
-            )()
-            
-            res = exchange.cancel_order(symbol=SymbolConverter(predict.symbol.name, predict.market.name), id=predict.order_id)
+            predict = await Predict.objects.select_related('symbol', 'market').aget(post__message_id=post.reply_to_msg_id)
+            res = exchange.cancel_order(symbol=predict.symbol.name, id=predict.order_id)
             print(res)
         
             return True
@@ -173,19 +167,20 @@ class FeyzianChannel(AbsChannel):
             return False
 
 
-
-
+    # ****************************************************************************************************************************
+    # ******************************************** methods for automatic trading *************************************************
+    # ****************************************************************************************************************************
     # abs
     async def predictParts(self, string, post:Post)-> Optional[Predict]:
         if string is None or post is None:
             return None
         
     # try:
-        settings = await sync_to_async(SettingConfig.objects.get)(id=1)
+        settings = await SettingConfig.objects.aget(id=1)
     
         # market
         market_value= await self.findMarket(string)
-        isSpot = market_value.name == "SPOT"
+        isSpot = market_value.name == MarketValues.SPOT.value
 
         # symbol
         symbol_value = await self.findSymbol(string, market_value)
@@ -198,7 +193,7 @@ class FeyzianChannel(AbsChannel):
             position_value = await self.findPosition(string)
             marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
         else:
-            position_value= await sync_to_async(PositionSide.objects.get)(name="BUY")
+            position_value= await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
         
         # stopLoss
         stopLoss_value = self.findStopLoss(string)
@@ -207,7 +202,7 @@ class FeyzianChannel(AbsChannel):
         entry_targets_value = self.findEntryTargets(string)
 
         # status    
-        status_value = await sync_to_async(PostStatus.objects.get)(name="PENDING")
+        status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
 
         # take_profit targets
         take_profit_targets_value = self.findTakeProfits(string)
@@ -244,7 +239,6 @@ class FeyzianChannel(AbsChannel):
 
         newPredict = Predict(**PredictData)
 
-        symbol_value_conv = SymbolConverter(symbol_value.name, market_value.name)
 
         # set entry value objects to DB
         first_entry_value = None
@@ -262,7 +256,7 @@ class FeyzianChannel(AbsChannel):
                         "date": None,
                     }
                 )
-                await sync_to_async(entryData.save)()
+                await entryData.asave()
         
         # set tp value objects to DB
         first_tp_value = None
@@ -282,7 +276,7 @@ class FeyzianChannel(AbsChannel):
                         "date": None,
                     }
                 )
-                await sync_to_async(takeProfitData.save)()
+                await takeProfitData.asave()
 
         # create order in exchange
         if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
@@ -291,12 +285,13 @@ class FeyzianChannel(AbsChannel):
 
             leverage_number = leverage_value if leverage_effect else 1
             position = position_value.name
+            symbol = symbol_value.name
 
             # set Margin Mode for a Pair in exchange
-            exchange.set_margin_mode(marginMode="ISOLATED",symbol=symbol_value_conv)
+            exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
 
             # set Leverage for a Pair in exchange
-            exchange.set_leverage(leverage=leverage_number, symbol=symbol_value_conv,params={
+            exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
                 'side': position
             })
 
@@ -305,7 +300,7 @@ class FeyzianChannel(AbsChannel):
             # set order in exchange
             print(first_entry_value, size_volume, "tp: ",first_tp_value,"sl: ", stopLoss_value, position)
             order_data = exchange.create_order(
-                symbol=symbol_value_conv,
+                symbol=symbol,
                 type='limit',
                 side='buy',
                 amount=size_volume,
@@ -335,23 +330,19 @@ class FeyzianChannel(AbsChannel):
             # save orderId in DB
             newPredict.order_id = order_data['info']['orderId']
 
-        await sync_to_async(newPredict.save)()
+        await newPredict.asave()
         return newPredict
     # except:
         
     #     # error_msg.append(model_to_dict(post))
     #     return None
-    
 
-
-    #abs, main method
+    #abs
     async def extractDataFromMessage(self, message):
         
         if isinstance(message, Message):
             is_predict_msg = self.isPredictMsg(message.message)
-            channel = await sync_to_async(Channel.objects.get)(
-                channel_id=message.peer_id.channel_id
-            )
+            channel = await Channel.objects.aget(channel_id=message.peer_id.channel_id)
             PostData = {
                 "channel": channel if channel else None,
                 "date": message.date,
@@ -365,7 +356,7 @@ class FeyzianChannel(AbsChannel):
             }
             post = Post(**PostData)
 
-            await sync_to_async(post.save)()
+            await post.asave()
             # predict msg
             if is_predict_msg:
                 await self.predictParts(message.message, post)
@@ -393,7 +384,7 @@ class FeyzianChannel(AbsChannel):
 
             # market
             market_value= await self.findMarket(string)
-            isSpot = market_value.name == "SPOT"
+            isSpot = market_value.name == MarketValues.SPOT.value
 
             # symbol
             symbol_value = await self.findSymbol(string, market_value)
@@ -406,7 +397,7 @@ class FeyzianChannel(AbsChannel):
                 position_value = await self.findPosition(string)
                 marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
             else:
-                position_value= await sync_to_async(PositionSide.objects.get)(name="BUY")
+                position_value = await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
             
             # stopLoss
             stopLoss_value = self.findStopLoss(string)
@@ -415,7 +406,7 @@ class FeyzianChannel(AbsChannel):
             entry_targets_value = self.findEntryTargets(string)
 
             # status    
-            status_value = await sync_to_async(PostStatus.objects.get)(name="PENDING")
+            status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
 
             # take_profit targets
             take_profit_targets_value = self.findTakeProfits(string)
@@ -435,44 +426,52 @@ class FeyzianChannel(AbsChannel):
                 return False
             
             print(symbol_value.name, position_value.name)
-            isSHORT = position_value.name == "SHORT"
+            isSHORT = position_value.name == PositionSideValues.SHORT.value
             first_entry_value = entry_targets_value[0]
             
             if should_check:
                 if not isSHORT:
-                    stat = await findLongOrderStat(stop_loss=stopLoss_value,
+                    stat: Stat = await findLongOrderStat(stop_loss=stopLoss_value,
                                     entry_price=entry_targets_value,
-                                    symbol=symbol_value,
+                                    symbolName=symbol_value.name,
                                     take_profit=take_profit_targets_value,
-                                    start_timestamp= int(post.date.timestamp() * 1000))
+                                    start_timestamp= int(post.date.timestamp() * 1000),
+                                    marketName=market_value.name,
+                                    max_day_wait=self.max_day_wait)
                 elif isSHORT:
-                    stat = await findShortOrderStat(stop_loss=stopLoss_value,
+                    stat: Stat = await findShortOrderStat(stop_loss=stopLoss_value,
                                     entry_price=entry_targets_value,
-                                    symbol=symbol_value,
+                                    symbolName=symbol_value.name,
                                     take_profit=take_profit_targets_value,
-                                    start_timestamp= int(post.date.timestamp() * 1000))
+                                    start_timestamp= int(post.date.timestamp() * 1000),
+                                    marketName=market_value.name,
+                                    max_day_wait=self.max_day_wait)
             else:
-                stat = {"tps": [], "entry_reached": [], "stop_loss_reached": None}
-                
+                stat: Stat = {"tps": [], "entry_reached": [], "stop_loss_reached": None, "break_reason": None}
+            
             print(stat)
             # stat['name'] = f'{symbol_value.name}, {position_value.name}'
             print_colored("********************************************************************************************************************","#0f0")
             tps_length = len(stat['tps'])
             profit_value = 0
 
-            if stat['stop_loss_reached']:
+            if stat['break_reason']:
+                status_value = await PostStatus.objects.aget(name=PostStatusValues.WAIT_MANY_DAYS.value)
+
+            elif stat['stop_loss_reached']:
                 if tps_length > 0:
-                    status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED WITH PROFIT", type=tps_length)
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED_WITH_PROFIT.value, type=tps_length)
                 else:
-                    status_value = await sync_to_async(PostStatus.objects.get)(name="FAILED")
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED.value)
                 profit_value = round(((float(stopLoss_value)/float(first_entry_value))-1)*100*float(leverage_value) * (-1 if isSHORT else 1), 5)
+           
             else:
                 if tps_length == len(take_profit_targets_value):
-                    status_value = await sync_to_async(PostStatus.objects.get)(name="FULLTARGET")
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.FULLTARGET.value)
                     profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
 
                 elif tps_length > 0:
-                    status_value = await sync_to_async(PostStatus.objects.get)(name="SUCCESS", type=tps_length)
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.SUCCESS.value, type=tps_length)
                     profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
                 
 
@@ -513,7 +512,7 @@ class FeyzianChannel(AbsChannel):
                             "date": date,
                         }
                     )
-                    await sync_to_async(entryData.save)()
+                    await entryData.asave()
             
             # # set tp value objects to DB
             if take_profit_targets_value:
@@ -539,22 +538,28 @@ class FeyzianChannel(AbsChannel):
                             "date": date,
                         }
                     )
-                    await sync_to_async(takeProfitData.save)()
+                    await takeProfitData.asave()
 
 
-            await sync_to_async(newPredict.save)()
+            await newPredict.asave()
             return newPredict
-        except:
-            super().handleError(post, "error in statisticPredictParts method", post.channel.name)
+        except Exception as e:
+            super().handleError(post, f"error in statisticPredictParts method {str(e)}", post.channel.name)
             return False
         
     # abs
     async def statistic_extractDataFromMessage(self, message):
         if isinstance(message, Message):
-            is_predict_msg = self.isPredictMsg(message.message)
-            channel = await sync_to_async(Channel.objects.get)(
+            channel = await Channel.objects.aget(
                 channel_id=message.peer_id.channel_id
             )
+            
+            existing = await Post.objects.filter(message_id=message.id, channel=channel).aexists()
+            if existing:
+                return None
+            
+            is_predict_msg = self.isPredictMsg(message.message)
+
             PostData = {
                 "channel": channel if channel else None,
                 "date": message.date,
@@ -568,7 +573,7 @@ class FeyzianChannel(AbsChannel):
             }
             post = Post(**PostData)
 
-            await sync_to_async(post.save)()
+            await post.asave()
         
             # # predict msg
             if is_predict_msg:

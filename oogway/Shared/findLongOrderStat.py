@@ -1,17 +1,16 @@
 # LONG
 from Shared.updateOHLC_FromAPI import updateOHLC_FromAPI
-from PostAnalyzer.models import (
-    Symbol,
-)
-from Shared.helpers import load_historic_tohlcv_json
+from Shared.dataIO import load_historic_tohlcv_json
+from Shared.helpers import addDaysToMilliTimeStamp
+from Shared.types import MarketName, Stat
+from Shared.Constant import PostStatusValues
+from typing import Optional, Awaitable
 
+async def findLongOrderStat(stop_loss:float, entry_price:list[float], symbolName:str, take_profit: list[float], start_timestamp:int, marketName:MarketName, max_day_wait:Optional[int])-> Awaitable[Stat]:
+    # max_day_wait helps avoid more waiting for a order status
 
-async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:Symbol, take_profit: list[float],start_timestamp: int):
-    # print(stop_loss,entry_price,symbol,take_profit,start_timestamp)
-
-
-    await updateOHLC_FromAPI(start_timestamp, symbol.name)
-    LData = load_historic_tohlcv_json(symbol.name)
+    await updateOHLC_FromAPI(start_timestamp, symbolName, marketName, max_day_wait)
+    LData = load_historic_tohlcv_json(symbolName=symbolName, marketName=marketName)
 
     tp_turn = 0
     tp = take_profit[tp_turn]
@@ -22,6 +21,11 @@ async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:S
     entry_reached = []
 
     stop_loss_reached = None
+
+    break_reason = None
+    stop_timestamp = float('inf')
+    if max_day_wait:
+        stop_timestamp = addDaysToMilliTimeStamp(start_timestamp, max_day_wait)
 
 
     # tohlcv
@@ -35,6 +39,12 @@ async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:S
         # row[0] = timestamp
         if row[0] < start_timestamp:
             continue
+
+        if max_day_wait and not bool(stop_loss_reached) and not bool(entry_reached) and not bool(tps):
+            if row[0] > stop_timestamp:
+                break_reason = PostStatusValues.WAIT_MANY_DAYS.value
+                break
+
                                     # row[3] = low
         if not entry_reached and float(row[3]) <= float(entry):
             entry_reached.append(row)
@@ -75,5 +85,5 @@ async def findLongOrderStat(stop_loss: float, entry_price: list[float], symbol:S
                 tp = take_profit[tp_turn]
         
     
-    return {"tps": tps, "entry_reached": entry_reached, "stop_loss_reached": stop_loss_reached}
+    return {"tps": tps, "entry_reached": entry_reached, "stop_loss_reached": stop_loss_reached, "break_reason": break_reason}
 

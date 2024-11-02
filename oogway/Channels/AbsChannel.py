@@ -17,6 +17,7 @@ from PostAnalyzer.models import (
 )
 from Shared.findError import findError
 from Shared.errorSaver import errorSaver
+from Shared.Constant import PositionSideValues, MarketValues
 
 
 # ****************************************************************************************************************************
@@ -30,7 +31,9 @@ _username = _config["username"]
 
 class AbsChannel(ABC):
 
-    _channel_id: Optional[int]= None
+    _channel_id:Optional[int] = None
+    # a days that we must wait for finding status of order(signal) in statistics method (such as statistic_PredictParts)
+    max_day_wait:int = 15
     
     # determine if a message is a predict message or not
     @abstractmethod
@@ -77,11 +80,24 @@ class AbsChannel(ABC):
     async def isCancel(self, post:Post)-> bool:
         pass
 
+    # ****************************************************************************************************************************
+    # ******************************************** methods for automatic trading *************************************************
+    # ****************************************************************************************************************************
+   
     # find important parts of a predict message such as symbol or entry point
     @abstractmethod
     async def predictParts(self, string, post: Post)-> Optional[Predict]:
         pass 
     
+    @abstractmethod
+    async def extractDataFromMessage(self, msg:str):
+        pass 
+
+
+     
+    # ****************************************************************************************************************************
+    # ************************************ Test message to find details for order(signal) ****************************************
+    # ****************************************************************************************************************************
     async def test(self, msg:str, showPrint:Optional[bool] = False)-> tuple[bool, str]:
         try:
             isPredict = self.isPredictMsg(msg)
@@ -98,7 +114,7 @@ class AbsChannel(ABC):
             if not symbol:
                 raise Exception("Sorry, cannot find Symbol")
 
-            if market.name != "SPOT":
+            if market.name != MarketValues.SPOT.value:
                 # ************* FIND POSITION *************
                 position = await self.findPosition(msg)
                 if not position:
@@ -128,7 +144,7 @@ class AbsChannel(ABC):
             if not profits:
                 raise Exception("Sorry, cannot find Profits")
             
-            is_error, is_error_message = findError(position.name if market.name != "SPOT" else "BUY", profits, entries, stopLoss)
+            is_error, is_error_message = findError(position.name if market.name != MarketValues.SPOT.value else PositionSideValues.BUY.value, profits, entries, stopLoss)
             if is_error:
                 raise Exception(is_error_message)
 
@@ -140,20 +156,16 @@ class AbsChannel(ABC):
 
         if showPrint: 
             print(f'isPredict: {isPredict}\nsymbol: {symbol.name}\nmarket: {market.name}')
-            if market.name != "SPOT":
+            if market.name != MarketValues.SPOT.value:
                 print(f'position: {position.name}\nmarginMode: {marginMode.name}\nleverage: {leverage}')
             print(f'stopLoss: {stopLoss}\nentries: {entries}\nprofits: {profits}')
         
 
         return True, ''
     
-    @abstractmethod
-    async def extractDataFromMessage(self, msg:str):
-        pass 
-
     
     # ****************************************************************************************************************************
-    # ******************************************** handle error ************************************************************
+    # ******************************************** handle error ******************************************************************
     # ****************************************************************************************************************************
 
     def handleError(self, post:Post, message:str, channel_name: Optional[str] = None):
