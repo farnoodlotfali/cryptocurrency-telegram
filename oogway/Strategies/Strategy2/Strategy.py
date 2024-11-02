@@ -1,6 +1,7 @@
 
 
-from Shared.helpers import print_colored, load_historic_tohlcv_json
+from Shared.helpers import print_colored
+from Shared.dataIO import load_historic_tohlcv_json
 from Shared.Constant import PostStatusValues
 from Shared.findRiskToReward import findRiskToReward
 from typing import Optional
@@ -75,7 +76,7 @@ async def backtest_with_money_strategy_2(predicts: list[Predict], my_money:float
         )()
 
 
-        LData = load_historic_tohlcv_json(pr.symbol.name)
+        LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
         isSHORT = pr.position.name == "SHORT"
 
         tp_turn = 0

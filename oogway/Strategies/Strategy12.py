@@ -1,6 +1,6 @@
 
 from Strategies.AbsStrategy import AbsStrategy
-from Shared.helpers import load_historic_tohlcv_json
+from Shared.dataIO import load_historic_tohlcv_json
 from Shared.Constant import PostStatusValues
 from asgiref.sync import sync_to_async
 from PostAnalyzer.models import (
@@ -52,7 +52,7 @@ class Strategy10(AbsStrategy):
             )()
 
             # load data from JSON file
-            LData = load_historic_tohlcv_json(pr.symbol.name)
+            LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
 
             isSHORT = pr.position.name == "SHORT"
 

@@ -3,6 +3,7 @@
 
 from datetime import timedelta
 from asgiref.sync import sync_to_async
+from Shared.Constant import PostStatusValues
 from PostAnalyzer.models import (
     EntryTarget,
     Predict,
@@ -49,7 +50,7 @@ async def findSameSignal(date, symbol: Symbol, market: Market, position: Positio
                         equal_tps.append(TPs[i])
           
             if (len(equal_entries) == len(entries)) and (len(equal_tps) == len(TPs)):
-                if predict_status.name == "SUCCESS" or predict_status.name == "PENDING":
+                if predict_status.name == PostStatusValues.SUCCESS.value or predict_status.name == PostStatusValues.PENDING.value:
                     await sync_to_async(item.delete)()
                     return False
                 
