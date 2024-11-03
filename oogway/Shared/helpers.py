@@ -102,3 +102,8 @@ def addDaysToMilliTimeStamp(time:int, days:int)->int:
     new_time = int(new_datetime.timestamp() * 1000)
     return new_time
 
+
+def convertDateToMilliTimeStamp(year:int, month:int, day:int, hour:int, minute:int, second:int=0)-> int:
+    dt = datetime(year, month, day, hour, minute, second)
+
+    return int(dt.timestamp())*1000
