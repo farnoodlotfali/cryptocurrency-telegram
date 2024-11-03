@@ -1,4 +1,4 @@
-
+from Shared.Constant import PositionSideValues
 PROFIT_ERROR = 'Error in position or take-profit'
 ENTRY_ERROR = 'Error in position or entry'
 STOPLOSS_ERROR = 'Error in position or stoploss'
@@ -7,7 +7,7 @@ STOPLOSS_ERROR = 'Error in position or stoploss'
 # in LONG position, if first TP is smaller than second TP, it should return error
 # in LONG position, if first entry is bigger than second entry, it should return error
 def findError(position: str, tps: list[float], entries: list[float], stoploss: float)-> tuple[bool, str]:
-    if position == "LONG":
+    if position == PositionSideValues.LONG.value:
         prev_tp = tps[0]
         for i in range(1, len(tps)):
             # error
@@ -29,7 +29,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
                 return True, STOPLOSS_ERROR
             
 
-    elif position == "SHORT":
+    elif position == PositionSideValues.SHORT.value:
         prev_tp = tps[0]
         for i in range(1, len(tps)):
             # error
@@ -51,7 +51,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
                 return True, STOPLOSS_ERROR
             
     # spot
-    elif position == "BUY":
+    elif position == PositionSideValues.BUY.value:
         pass
 
 
