@@ -115,6 +115,7 @@ class AbsChannel(ABC):
             if not symbol:
                 raise Exception("Sorry, cannot find Symbol")
 
+            leverage = None
             if market.name != MarketValues.SPOT.value:
                 # ************* FIND POSITION *************
                 position = await self.findPosition(msg)
@@ -145,7 +146,7 @@ class AbsChannel(ABC):
             if not profits:
                 raise Exception("Sorry, cannot find Profits")
             
-            is_error, is_error_message = findError(position.name if market.name != MarketValues.SPOT.value else PositionSideValues.BUY.value, profits, entries, stopLoss)
+            is_error, is_error_message = findError(position.name if market.name != MarketValues.SPOT.value else PositionSideValues.BUY.value, profits, entries, stopLoss, leverage)
             if is_error:
                 raise Exception(is_error_message)
 

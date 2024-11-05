@@ -1,12 +1,18 @@
-from Shared.Constant import PositionSideValues
+from Shared.Constant import PositionSideValues, MAX_PROFIT_VALUE
+from Shared.helpers import findProfit
+from typing import Optional
+
 PROFIT_ERROR = 'Error in position or take-profit'
 ENTRY_ERROR = 'Error in position or entry'
 STOPLOSS_ERROR = 'Error in position or stoploss'
+PROFIT_ERROR = 'Error in position or stoploss'
+
+
 
 # will find error in take-profits(TP), entries, stoploss or position
 # in LONG position, if first TP is smaller than second TP, it should return error
 # in LONG position, if first entry is bigger than second entry, it should return error
-def findError(position: str, tps: list[float], entries: list[float], stoploss: float)-> tuple[bool, str]:
+def findError(position: str, tps: list[float], entries: list[float], stoploss: float, leverage:Optional[int]= None)-> tuple[bool, str]:
     if position == PositionSideValues.LONG.value:
         prev_tp = tps[0]
         for i in range(1, len(tps)):
@@ -28,6 +34,12 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
             if stoploss > entries[i]:
                 return True, STOPLOSS_ERROR
             
+        for et in entries:
+            for tp in tps:
+                # error
+                if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
+                    return True, PROFIT_ERROR
+
 
     elif position == PositionSideValues.SHORT.value:
         prev_tp = tps[0]
@@ -49,6 +61,12 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
             # error
             if stoploss < entries[i]:
                 return True, STOPLOSS_ERROR
+            
+        for et in entries:
+            for tp in tps:
+                # error
+                if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
+                    return True, PROFIT_ERROR
             
     # spot
     elif position == PositionSideValues.BUY.value:

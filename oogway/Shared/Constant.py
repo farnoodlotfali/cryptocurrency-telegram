@@ -38,6 +38,9 @@ class MarginModeValues(Enum):
     ISOLATED = 'ISOLATED'
     CROSS = 'CROSS'
 
+# 60 percent
+MAX_PROFIT_VALUE = 60
+
 
 # # for webPanel you can check SettingConfig model in PostAnalyzer\models.py
 # SettingConfigsVariables = {

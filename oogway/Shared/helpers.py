@@ -122,3 +122,8 @@ def zero_hours_minutes_seconds(timestamp_ms):
     
     # Convert back to timestamp in milliseconds
     return int(dt_zeroed.timestamp() * 1000)
+
+
+def findProfit(first_value:float, second_value:float, leverage:int)-> float:
+
+    return round(abs(((second_value/first_value)-1)*100*leverage), 5)
