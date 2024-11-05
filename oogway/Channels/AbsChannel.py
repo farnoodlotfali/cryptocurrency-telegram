@@ -17,8 +17,9 @@ from PostAnalyzer.models import (
 )
 from Shared.findError import findError
 from Shared.errorSaver import errorSaver
+from Shared.helpers import print_colored
 from Shared.Constant import PositionSideValues, MarketValues
-
+import time
 
 # ****************************************************************************************************************************
 
@@ -188,7 +189,7 @@ class AbsChannel(ABC):
 
    
     # main method, find statistics,  Get channel history
-    async def FindStatistic(self, year:int, month:int, day:int)-> bool:
+    async def FindStatistic(self, year:int, month:int, day:int,offset_date:Optional[int]= None)-> bool:
 
         if not self._channel_id:
             print('Please set _channel_id')
@@ -200,7 +201,7 @@ class AbsChannel(ABC):
 
         offset_id = 0
         limit = 100
-        all_messages = []
+        all_messages: list[Message] = []
         total_messages = 0
         total_count_limit = 0
 
@@ -213,8 +214,8 @@ class AbsChannel(ABC):
             GetHistoryRequest(
                     peer=feyzian_channel,
                     offset_id=offset_id,
-                    offset_date=None,
-                    # offset_date=start_date,
+                    # timestamp not milli timestamp
+                    offset_date=offset_date,
                     add_offset=0,
                     limit=limit,
                     max_id=0,
@@ -244,7 +245,19 @@ class AbsChannel(ABC):
 
         await client.disconnect()
 
+
+        this_month = None
         for msg in reversed(all_messages):
+
+            if not this_month:
+                this_month = msg.date.month
+            
+            if this_month != msg.date.month:
+                print_colored('waiting 5 min...', '#FFFF00')
+                time.sleep(300) # 5 minutes
+                this_month = msg.date.month
+                
+
             await self.statistic_extractDataFromMessage(msg)
 
         return True

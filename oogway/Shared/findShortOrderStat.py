@@ -3,11 +3,11 @@ from Shared.updateOHLC_FromAPI import updateOHLC_FromAPI
 from Shared.helpers import addDaysToMilliTimeStamp
 from Shared.dataIO import load_historic_tohlcv_json
 from Shared.types import MarketName, Stat
-from typing import Optional, Awaitable
+from typing import Awaitable
 from Shared.Constant import PostStatusValues
 
 
-async def findShortOrderStat(stop_loss:float ,entry_price:list[float], symbolName:str, take_profit:list[float], start_timestamp: int, marketName:MarketName, max_day_wait:Optional[int])-> Awaitable[Stat]:
+async def findShortOrderStat(stop_loss:float ,entry_price:list[float], symbolName:str, take_profit:list[float], start_timestamp: int, marketName:MarketName, max_day_wait:int = 10)-> Awaitable[Stat]:
     # max_day_wait helps avoid more waiting for a order status
     
     await updateOHLC_FromAPI(start_timestamp, symbolName, marketName, max_day_wait)
@@ -24,9 +24,7 @@ async def findShortOrderStat(stop_loss:float ,entry_price:list[float], symbolNam
     stop_loss_reached = None
 
     break_reason = None
-    stop_timestamp = float('inf')
-    if max_day_wait:
-        stop_timestamp = addDaysToMilliTimeStamp(start_timestamp, max_day_wait)
+    stop_timestamp = addDaysToMilliTimeStamp(start_timestamp, max_day_wait)
 
     # tohlcv
     # row[0] = timestamp

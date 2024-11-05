@@ -4,6 +4,8 @@ from datetime import datetime,timedelta
 from typing import Match
 import os
 from IPython.display import HTML, display
+import pandas as pd
+
 
 def returnSearchValue(val: Match[str]):
     return val.group(1) if val else None
@@ -25,7 +27,7 @@ class DateTimeEncoder(json.JSONEncoder):
     
 
 def rootConvertToJsonFile(data, name, folder_name):
-    # Ensure the folder exists
+    # # Ensure the folder exists
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
    
@@ -33,7 +35,8 @@ def rootConvertToJsonFile(data, name, folder_name):
     file_path = os.path.join(folder_name, f"{name}.json")
     
     with open(file_path, "w", encoding="utf-8") as outfile:
-        json.dump(data, outfile, cls=DateTimeEncoder, ensure_ascii=False)
+        json.dump(data, outfile, cls=DateTimeEncoder, ensure_ascii=False, skipkeys=True)
+
         
 # convert to json file
 def convertToJsonFile(data, name, folder_name):
@@ -45,7 +48,7 @@ def convertToJsonFile(data, name, folder_name):
 # load json file
 def load_json(filename):
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding="utf-8") as file:
             data = json.load(file)
     except FileNotFoundError:
         data = []
@@ -107,3 +110,15 @@ def convertDateToMilliTimeStamp(year:int, month:int, day:int, hour:int, minute:i
     dt = datetime(year, month, day, hour, minute, second)
 
     return int(dt.timestamp())*1000
+
+
+
+def zero_hours_minutes_seconds(timestamp_ms):
+    # Convert to datetime object
+    dt = datetime.fromtimestamp(timestamp_ms / 1000)
+    
+    # Set minutes and seconds to zero
+    dt_zeroed = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Convert back to timestamp in milliseconds
+    return int(dt_zeroed.timestamp() * 1000)
