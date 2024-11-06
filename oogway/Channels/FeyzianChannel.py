@@ -15,9 +15,10 @@ from PostAnalyzer.models import (
     TakeProfitTarget,
     SettingConfig,
     PositionSide,
-    MarginMode
+    MarginMode,
+    StopLoss
 )
-from Shared.helpers import returnSearchValue, print_colored, subtractTime
+from Shared.helpers import returnSearchValue, print_colored, subtractTime, findProfit
 from Shared.Exchange import exchange
 from Shared.findSameSignal import findSameSignal
 from Shared.findShortOrderStat import findShortOrderStat
@@ -238,6 +239,18 @@ class FeyzianChannel(AbsChannel):
 
 
         newPredict = Predict(**PredictData)
+        await newPredict.asave()
+        
+        stoploss = StopLoss(
+            **{
+                "predict": newPredict,
+                "value": stopLoss_value,
+                "period": None,
+                "date": None,
+                "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
+            }
+        )
+        await stoploss.asave()
 
 
         # set entry value objects to DB
@@ -248,7 +261,7 @@ class FeyzianChannel(AbsChannel):
                     first_entry_value = value
                 entryData = EntryTarget(
                     **{
-                        "post": post,
+                        "predict": newPredict,
                         "index": i,
                         "value": value,
                         "active": False,
@@ -267,12 +280,12 @@ class FeyzianChannel(AbsChannel):
 
                 takeProfitData = TakeProfitTarget(
                     **{
-                        "post": post,
+                        "predict": newPredict,
                         "index": i,
                         "value": value,
                         "active": False,
                         "period": None,
-                        "profit": round(abs(((value/first_entry_value)-1)*100*leverage_value), 5),
+                        "profit": findProfit(first_entry_value, value, leverage_value),
                         "date": None,
                     }
                 )
@@ -326,11 +339,11 @@ class FeyzianChannel(AbsChannel):
             print(order_data)
 
             
-
             # save orderId in DB
             newPredict.order_id = order_data['info']['orderId']
+            await newPredict.asave()
 
-        await newPredict.asave()
+        
         return newPredict
     # except:
         
@@ -463,16 +476,16 @@ class FeyzianChannel(AbsChannel):
                     status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED_WITH_PROFIT.value, type=tps_length)
                 else:
                     status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED.value)
-                profit_value = round(((float(stopLoss_value)/float(first_entry_value))-1)*100*float(leverage_value) * (-1 if isSHORT else 1), 5)
-           
+                profit_value = findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1) 
+            
             else:
                 if tps_length == len(take_profit_targets_value):
                     status_value = await PostStatus.objects.aget(name=PostStatusValues.FULLTARGET.value)
-                    profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
+                    profit_value = findProfit(first_entry_value, take_profit_targets_value[tps_length-1], leverage_value) 
 
                 elif tps_length > 0:
                     status_value = await PostStatus.objects.aget(name=PostStatusValues.SUCCESS.value, type=tps_length)
-                    profit_value = round(abs(((take_profit_targets_value[tps_length-1]/first_entry_value)-1)*100*leverage_value), 5)
+                    profit_value = findProfit(first_entry_value, take_profit_targets_value[tps_length-1], leverage_value) 
                 
 
             # set predict object to DB
@@ -483,13 +496,32 @@ class FeyzianChannel(AbsChannel):
                 "position": position_value,
                 "market": market_value,
                 "leverage": leverage_value,
-                "stopLoss": stopLoss_value,
                 "margin_mode": marginMode_value,
                 "profit": profit_value,
                 "status": status_value, 
                 "order_id": None,
             }
             newPredict = Predict(**PredictData)
+            await newPredict.asave()
+
+            # set the stoploss
+            date = None
+            period = None
+            if stat['stop_loss_reached']:
+                time = int(stat['stop_loss_reached'][0])
+                date = datetime.fromtimestamp(time/ 1000)
+                period = subtractTime(time, int(newPredict.date.timestamp() * 1000))
+
+            stoploss = StopLoss(
+                **{
+                    "predict": newPredict,
+                    "value": stopLoss_value,
+                    "period": period,
+                    "date": date,
+                    "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
+                }
+            )
+            await stoploss.asave()
 
             # set entry value objects to DB
             if entry_targets_value:
@@ -501,10 +533,10 @@ class FeyzianChannel(AbsChannel):
                     if isActive:
                         time = int(stat['entry_reached'][i][0])
                         date = datetime.fromtimestamp(time/ 1000)
-                        period = subtractTime(time, int(post.date.timestamp() * 1000))
+                        period = subtractTime(time, int(newPredict.date.timestamp() * 1000))
                     entryData = EntryTarget(
                         **{
-                            "post": post,
+                            "predict": newPredict,
                             "index": i,
                             "value": value,
                             "active": isActive,
@@ -525,23 +557,23 @@ class FeyzianChannel(AbsChannel):
                     if isActive:
                         time = int(stat['tps'][i][0])
                         date = datetime.fromtimestamp(time/ 1000)
-                        period = subtractTime(time, int(post.date.timestamp() * 1000))
+                        period = subtractTime(time, int(newPredict.date.timestamp() * 1000))
 
                     takeProfitData = TakeProfitTarget(
                         **{
-                            "post": post,
+                            "predict": newPredict,
                             "index": i,
                             "value": value,
                             "active": isActive,
                             "period": period,
-                            "profit": round(abs(((value/first_entry_value)-1)*100*leverage_value), 5),
+                            "profit": findProfit(first_entry_value, value, leverage_value),
                             "date": date,
                         }
                     )
                     await takeProfitData.asave()
 
 
-            await newPredict.asave()
+            
             return newPredict
         except Exception as e:
             super().handleError(post, f"error in statisticPredictParts method {str(e)}", post.channel.name)

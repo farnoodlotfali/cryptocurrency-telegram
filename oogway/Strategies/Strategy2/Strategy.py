@@ -92,7 +92,6 @@ async def backtest_with_money_strategy_2(predicts: list[Predict], my_money:float
         profit = 0
        
         stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, max_percent_stoploss)
-        # stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, findRiskToReward([en.value for en in entry_price], [tp.value for tp in take_profit], pr.stopLoss))
         
         # tohlcv
         # row[0] = timestamp

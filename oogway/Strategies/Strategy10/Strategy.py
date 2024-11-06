@@ -9,7 +9,8 @@ from asgiref.sync import sync_to_async
 from PostAnalyzer.models import (
     Predict,
     TakeProfitTarget,
-    EntryTarget
+    EntryTarget,
+    StopLoss
 )
 from django.forms.models import model_to_dict
 
@@ -118,6 +119,9 @@ async def backtest_with_money_strategy_10(predicts: list[Predict], my_money:floa
             lambda: list(TakeProfitTarget.objects.filter(post=pr.post).order_by('index'))
         )()
 
+        # get stoploss 
+        stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
+
 
         LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
         isSHORT = pr.position.name == "SHORT"
@@ -133,9 +137,9 @@ async def backtest_with_money_strategy_10(predicts: list[Predict], my_money:floa
         stop_loss_reached = None
         
         profit = 0
+        stop_loss = stoploss.value
        
-        stop_loss_profit = round(((pr.stopLoss/new_entry)-1)*pr.leverage * (-1 if isSHORT else 1), 5) 
-        stop_loss = pr.stopLoss
+        stop_loss_profit = round(((stop_loss/new_entry)-1)*pr.leverage * (-1 if isSHORT else 1), 5) 
 
         
         # tohlcv

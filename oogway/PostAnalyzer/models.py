@@ -74,7 +74,7 @@ class Predict(models.Model):
     position = models.ForeignKey(PositionSide, on_delete=models.CASCADE,editable=True)
     margin_mode = models.ForeignKey(MarginMode, on_delete=models.CASCADE, editable=True, null=True,default=None)
     leverage = models.IntegerField(default=1, editable=True, null=True)
-    stopLoss = models.FloatField(editable=True, null=True)
+    # stopLoss = models.FloatField(editable=True, null=True)
     profit = models.FloatField(default=0, editable=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     order_id = models.CharField(max_length=50, editable=True, null=True, default=None, blank=True)
@@ -85,7 +85,7 @@ class Predict(models.Model):
 
 
 class EntryTarget(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    predict = models.ForeignKey(Predict, on_delete=models.CASCADE)
     index = models.IntegerField(editable=True, null=True)
     value = models.FloatField(default=0, editable=True, null=True)
     active = models.BooleanField(default=False, editable=True, null=True)
@@ -94,11 +94,11 @@ class EntryTarget(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.post.message_id} {self.value} {self.active}"
+        return f"{self.predict.id} {self.value} {self.active}"
 
 
 class TakeProfitTarget(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    predict = models.ForeignKey(Predict, on_delete=models.CASCADE)
     index = models.IntegerField(editable=True, null=True)
     value = models.FloatField(default=0, editable=True, null=True)
     active = models.BooleanField(default=False, editable=True, null=True)
@@ -108,7 +108,18 @@ class TakeProfitTarget(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.post.message_id} {self.value} {self.active}"
+        return f"{self.predict.id} {self.value} {self.active}"
+    
+class StopLoss(models.Model):
+    predict = models.ForeignKey(Predict, on_delete=models.CASCADE)
+    value = models.FloatField(default=0, editable=True, null=True)
+    period = models.CharField(max_length=60, null=True)
+    date = models.DateTimeField(editable=True, null=True)
+    profit = models.FloatField(default=0, editable=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.predict.id} {self.value}"
 
 class SettingConfig(models.Model):
     allow_channels_set_order = models.BooleanField(default=False, editable=True, null=True)

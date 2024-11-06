@@ -5,7 +5,7 @@ from typing import Optional
 PROFIT_ERROR = 'Error in position or take-profit'
 ENTRY_ERROR = 'Error in position or entry'
 STOPLOSS_ERROR = 'Error in position or stoploss'
-PROFIT_ERROR = 'Error in position or stoploss'
+PROFIT_MAX_PROFIT_VALUE_ERROR = 'Error, profit is bigger than MAX_PROFIT_VALUE'
 
 
 
@@ -38,7 +38,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
             for tp in tps:
                 # error
                 if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
-                    return True, PROFIT_ERROR
+                    return True, PROFIT_MAX_PROFIT_VALUE_ERROR
 
 
     elif position == PositionSideValues.SHORT.value:
@@ -66,7 +66,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
             for tp in tps:
                 # error
                 if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
-                    return True, PROFIT_ERROR
+                    return True, PROFIT_MAX_PROFIT_VALUE_ERROR
             
     # spot
     elif position == PositionSideValues.BUY.value:

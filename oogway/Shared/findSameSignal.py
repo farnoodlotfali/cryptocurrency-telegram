@@ -23,7 +23,7 @@ async def findSameSignal(date, symbol: Symbol, market: Market, position: Positio
         position__name=position.name,
         margin_mode__name=margin_mode.name,
         leverage=int(leverage),
-        stopLoss=float(stoploss),
+        # stopLoss=float(stoploss),
         post__channel__channel_id=channel_id,
         # date__gte=two_day_ago
     ).select_related('post', 'status'))
@@ -32,18 +32,17 @@ async def findSameSignal(date, symbol: Symbol, market: Market, position: Positio
     if predict_find:
 
         for item in predict_find:
-            predict_post = item.post
             predict_status = item.status
             equal_entries = []
             equal_tps = []
 
-            entries_find = await sync_to_async(list)(EntryTarget.objects.filter(post=predict_post))
+            entries_find = await sync_to_async(list)(EntryTarget.objects.filter(predict=item))
             if len(entries_find) == len(entries):
                 for i, entry in enumerate(entries_find):
                     if float(entry.value) == float(entries[i]):
                         equal_entries.append(entries[i])
             
-            tps_find = await sync_to_async(list)(TakeProfitTarget.objects.filter(post=predict_post).order_by('index'))
+            tps_find = await sync_to_async(list)(TakeProfitTarget.objects.filter(predict=item).order_by('index'))
             if len(tps_find) == len(TPs):
                 for i, tp in enumerate(tps_find):
                     if float(tp.value) == float(TPs[i]):

@@ -72,7 +72,6 @@ class AbsStrategy(ABC):
         #     'market': "",
         #     'position': "",
         #     'leverage': 1,
-        #     'stopLoss': "",
         #     'id': 1,
         # }
     ]
@@ -125,7 +124,6 @@ class AbsStrategy(ABC):
             'market': order.market.name,
             'position': order.position.name,
             'leverage': order.leverage,
-            'stopLoss': order.stopLoss,
             'id': order.id,
         })
 
@@ -153,7 +151,6 @@ class AbsStrategy(ABC):
             'market': order.market.name,
             'position': order.position.name,
             'leverage': order.leverage,
-            'stopLoss': order.stopLoss,
             'id': order.id,
         })
 
@@ -177,7 +174,6 @@ class AbsStrategy(ABC):
             'market': order.market.name,
             'position': order.position.name,
             'leverage': order.leverage,
-            'stopLoss': order.stopLoss,
             'id': order.id,
         })
 

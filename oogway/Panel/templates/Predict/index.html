@@ -133,7 +133,6 @@
                           <th scope="col">Market</th>
                           <th scope="col">Position</th>
                           <th scope="col">Leverage</th>
-                          <th scope="col">StopLoss</th>
                           <th scope="col">Status/Type</th>
                           <th scope="col">Post (id-message)</th>
                           <th scope="col">Channel ID</th>
@@ -173,10 +172,6 @@
                             <!-- has  leverage -->
                             {{ predict.leverage}} {% else %} - {% endif %}
                           </th>
-                          <th>
-                            <!-- stopLoss -->
-                            {{predict.stopLoss}}
-                        </th>
                           <th>
                             <!-- status -->
                             <div
@@ -261,7 +256,6 @@
                           <th scope="col">Market</th>
                           <th scope="col">Position</th>
                           <th scope="col">Leverage</th>
-                          <th scope="col">StopLoss</th>
                           <th scope="col">Status</th>
                           <th scope="col">Post (id-message)</th>
                           <th scope="col">Channel ID</th>
@@ -336,7 +330,7 @@
             // search: {
             //   search: "12",
             // },
-            order: [[9, "desc"]],
+            order: [[8, "desc"]],
           })
           .buttons()
           .container()

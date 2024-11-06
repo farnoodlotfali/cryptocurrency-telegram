@@ -9,7 +9,8 @@ from asgiref.sync import sync_to_async
 from PostAnalyzer.models import (
     Predict,
     TakeProfitTarget,
-    EntryTarget
+    EntryTarget,
+    StopLoss
 )
 from django.forms.models import model_to_dict
 
@@ -74,6 +75,8 @@ async def backtest_with_money_strategy_9(predicts: list[Predict], my_money:float
         take_profit = await sync_to_async(
             lambda: list(TakeProfitTarget.objects.filter(post=pr.post).order_by('index'))
         )()
+        # get stoploss 
+        stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
 
 
         LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
@@ -90,11 +93,11 @@ async def backtest_with_money_strategy_9(predicts: list[Predict], my_money:float
         stop_loss_reached = None
         start_timestamp = int(pr.date.timestamp() * 1000)
         profit = 0
-       
-        stop_loss_profit = round(((pr.stopLoss/new_entry)-1)*pr.leverage * (-1 if isSHORT else 1), 5) 
-        stop_loss = pr.stopLoss
 
-        # stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, findRiskToReward([en.value for en in entry_price], [tp.value for tp in take_profit], pr.stopLoss))
+        stop_loss = stoploss.value
+        stop_loss_profit = round(((stop_loss/new_entry)-1)*pr.leverage * (-1 if isSHORT else 1), 5) 
+
+        # stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, findRiskToReward([en.value for en in entry_price], [tp.value for tp in take_profit], stop_loss))
         
         # tohlcv
         # row[0] = timestamp

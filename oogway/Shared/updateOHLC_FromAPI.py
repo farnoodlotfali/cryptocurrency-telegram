@@ -31,7 +31,7 @@ async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:Mar
     is_complete = check[0]
 
     if not is_complete:
-        print_colored("json", "#c01")
+        print_colored(f"json, {start_timestamp}", "#c01")
         start_timestamp = start_timestamp - milliSecInMinute
         next_day = start_timestamp + milliSecInDay 
         while keepOn:

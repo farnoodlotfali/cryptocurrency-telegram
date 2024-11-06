@@ -1,7 +1,7 @@
 
 import json
 from datetime import datetime,timedelta
-from typing import Match
+from typing import Match, Optional
 import os
 from IPython.display import HTML, display
 import pandas as pd
@@ -124,6 +124,10 @@ def zero_hours_minutes_seconds(timestamp_ms):
     return int(dt_zeroed.timestamp() * 1000)
 
 
-def findProfit(first_value:float, second_value:float, leverage:int)-> float:
+def findProfit(first_value:float, second_value:float, leverage:int, percent:bool = True)-> float:
+    profit = round(abs(((second_value/first_value)-1)*100*leverage), 5)
 
-    return round(abs(((second_value/first_value)-1)*100*leverage), 5)
+    if percent:
+        return profit
+
+    return profit/100

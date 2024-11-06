@@ -1,12 +1,14 @@
 
 from Strategies.AbsStrategy import AbsStrategy
 from Shared.dataIO import load_historic_tohlcv_json
-from Shared.Constant import PostStatusValues
+from Shared.helpers import findProfit
+from Shared.Constant import PostStatusValues, PositionSideValues
 from asgiref.sync import sync_to_async
 from PostAnalyzer.models import (
     Predict,
     TakeProfitTarget,
-    EntryTarget
+    EntryTarget,
+    StopLoss
 )
 
 
@@ -43,18 +45,20 @@ class Strategy10(AbsStrategy):
 
             # get entries 
             entry_price = await sync_to_async(
-                lambda: list(EntryTarget.objects.filter(post=pr.post).order_by('index'))
+                lambda: list(EntryTarget.objects.filter(predict=pr).order_by('index'))
             )()
 
             # get take-profits 
             take_profit = await sync_to_async(
-                lambda: list(TakeProfitTarget.objects.filter(post=pr.post).order_by('index'))
+                lambda: list(TakeProfitTarget.objects.filter(predict=pr).order_by('index'))
             )()
+            # get stoploss 
+            stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
 
             # load data from JSON file
             LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
 
-            isSHORT = pr.position.name == "SHORT"
+            isSHORT = pr.position.name == PositionSideValues.SHORT.value
 
             tp_turn = 0
             tp = take_profit[tp_turn].value
@@ -67,10 +71,10 @@ class Strategy10(AbsStrategy):
             profit = 0
 
             stop_loss_reached = None
-            stop_loss = pr.stopLoss
+            stop_loss = stoploss.value
             # to find percent(%) off loss
-            stop_loss_percent = round(((stop_loss/new_entry)-1)*pr.leverage * (-1 if isSHORT else 1), 5) 
-
+            stop_loss_percent = -findProfit(new_entry,stop_loss,pr.leverage, False)
+            
             # add positionSize to pending money
             self.total_pending_money += positionSize
             self.pending_count += 1
@@ -97,7 +101,7 @@ class Strategy10(AbsStrategy):
             # row[3] = low
             # row[4] = close
             # row[5] = volume
-            if pr.position.name == "LONG":
+            if pr.position.name == PositionSideValues.LONG.value:
                 for row in LData:
                     # continue until reach to start time of order message
                     if row[0] < start_timestamp:
@@ -137,7 +141,7 @@ class Strategy10(AbsStrategy):
                             is_hit = True
 
                             # calculate the amount of loss
-                            profit += round(((stop_loss/new_entry)-1)*100*pr.leverage * 1, 5) 
+                            profit += -findProfit(new_entry, stop_loss, pr.leverage)
                            
                             # add stop loss
                             stop_loss_reached = {
@@ -153,8 +157,9 @@ class Strategy10(AbsStrategy):
                             break
 
                         if float(row[2]) >= tp: 
-                            # calculate the amount of loss
-                            profit_value = round(((tp/new_entry)-1)*100*pr.leverage * 1, 5)
+                            # calculate the amount of profit
+                            profit_value = findProfit(new_entry, tp, pr.leverage)
+                            
                             profit += profit_value
                             
                             # set new entry
@@ -205,7 +210,8 @@ class Strategy10(AbsStrategy):
                             self.pending_count -= 1
                             self.loss_count += 1
 
-                            profit += round(((stop_loss/new_entry)-1)*100*pr.leverage * -1, 5)  
+                            profit += -findProfit(new_entry, stop_loss, pr.leverage) 
+
                             is_hit = True
                             stop_loss_reached = {
                                 'value': new_entry,
@@ -218,7 +224,8 @@ class Strategy10(AbsStrategy):
                         if float(row[3]) <= tp:
                             # wait_for_entry = True
 
-                            profit_value = round(((tp/new_entry)-1)*100*pr.leverage * -1, 5)
+                            profit_value = findProfit(new_entry, tp, pr.leverage)
+
                             profit += profit_value
                             
                             new_entry = take_profit[tp_turn].value

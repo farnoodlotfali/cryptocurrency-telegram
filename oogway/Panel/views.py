@@ -15,7 +15,8 @@ from PostAnalyzer.models import (
     Symbol,
     TakeProfitTarget,
     SettingConfig,
-    PositionSide
+    PositionSide,
+    StopLoss
 )
 from telethon.sync import TelegramClient, events
 from telethon.errors import SessionPasswordNeededError
@@ -182,9 +183,13 @@ def post_detail(request, post_id):
     entries = None
     take_profits = None
     if post.is_predict_msg:
+
         predict = Predict.objects.get(post=post)
-        entries = EntryTarget.objects.filter(post=post)
-        take_profits = TakeProfitTarget.objects.filter(post=post)
+        entries = EntryTarget.objects.filter(predict=predict)
+        take_profits = TakeProfitTarget.objects.filter(predict=predict)
+        stoploss = StopLoss.objects.get(predict=predict)
+
+
 
     return render(
         request,
@@ -195,6 +200,7 @@ def post_detail(request, post_id):
             "predict": predict,
             "entries": entries,
             "take_profits": take_profits,
+            "stoploss": stoploss,
         },
     )
 
@@ -277,7 +283,7 @@ def tp_index_stat(request):
     }   
   
     for pr in tp_indexes:
-        tp = TakeProfitTarget.objects.filter(post=pr.post, active=True).order_by('-index').first()
+        tp = TakeProfitTarget.objects.filter(predict=pr, active=True).order_by('-index').first()
         index = int(tp.index)+1
         # print(pr.symbol.name,index)
         if index == 1:
@@ -484,7 +490,7 @@ def get_statistic(request):
     predict_failed_justSuc = Predict.objects.filter(status__name="FAILED WITH PROFIT",**query_filters)
     t = 0
     for predict in predict_failed_justSuc:
-        tp = TakeProfitTarget.objects.filter(post=predict.post, active=True).order_by('-index').first()
+        tp = TakeProfitTarget.objects.filter(predict=predict, active=True).order_by('-index').first()
         # print(predict.symbol.name, int(tp.index)+1)
         if tp:
             # total_profit = (((tp.profit or 0)/100) +  1) * 100

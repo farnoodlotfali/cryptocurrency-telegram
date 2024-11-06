@@ -115,7 +115,7 @@
                           <i class="fas fa-times-circle text-danger mr-1"></i>
                           StopLoss
                         </b>
-                        <span class="float-right"> {{predict.stopLoss}} </span>
+                        <span class="float-right"> {{stoploss.value}} </span>
                       </li> 
                       <li class="list-group-item">
                         <b>
@@ -298,6 +298,66 @@
                       <!-- /.card-body -->
                     </div>
                   </div>
+
+                    <!-- stoploss -->
+                    <div class="col-md-12">
+                      <div class="card card-primary">
+                        <div class="card-header">
+                          <h4 class="text-center text-white">
+                            StopLoss Status
+                          </h4>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                          <div class="tab-content">
+                            <table class="table table-bordered table-striped">
+                              <thead class="thead-dark">
+                                <tr>
+                                  <th scope="col">Value</th>
+                                  <th scope="col">Period</th>
+                                  <th scope="col">Profit</th>
+                                  <th scope="col">Date</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% if stoploss %}
+                                <tr>
+                                  <th>
+                                    <!-- Value -->
+                                    {{stoploss.value}}
+                                  </th>
+                                  <th>
+                                    <!-- Period -->
+                                    {% if stoploss.period %}
+                                    <!-- true -->
+                                    {{stoploss.period}}
+                                    <!-- else -->
+                                    {% else %} - {% endif %}
+                                  </th>
+                                  <th>
+                                    <!-- Profit -->
+                                    {{stoploss.profit}} %
+                                  </th> 
+                                  <th>
+                                    <!-- Date -->
+                                    {% if stoploss.date %}
+                                    <!-- has date -->
+                                    {{stoploss.date}}
+                                    <!-- else -->
+                                    {% else %} - {% endif %}
+                                  </th>
+                                </tr>
+  
+                                {% endif %}
+                              </tbody>
+                            </table>
+  
+                            <!-- /.post -->
+                          </div>
+                        </div>
+                        <!-- /.card-body -->
+                      </div>
+                    </div>
 
                   <!-- take_profits -->
                   <div class="col-md-12">
