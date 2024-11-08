@@ -1,4 +1,5 @@
 from django import template
+from Shared.Constant import PostStatusValues
 from django.urls import reverse, NoReverseMatch
 
 register = template.Library()
@@ -28,15 +29,17 @@ def abs_number(value):
 
 @register.filter(name='status_color')
 def status_color(status):
-    if status == 'SUCCESS':
+    if status == PostStatusValues.SUCCESS.value:
         return "text-lime" 
-    elif status == 'FAILED' or  status == 'CANCELED':
+    elif status == PostStatusValues.FAILED.value or  status == PostStatusValues.CANCELED.value:
         return "text-danger" 
-    elif status == 'FULLTARGET':
+    elif status == PostStatusValues.FULLTARGET.value:
         return "text-green" 
-    elif status == 'ERROR':
+    elif status == PostStatusValues.ERROR.value:
         return "text-maroon" 
-    elif status == 'FAILED WITH PROFIT':
+    elif status == PostStatusValues.FAILED_WITH_PROFIT.value:
         return "text-orange" 
-    elif status == 'PENDING':
+    elif status == PostStatusValues.PENDING.value:
         return "text-gray"
+    elif status == PostStatusValues.WAIT_MANY_DAYS.value:
+        return "text-yellow"
