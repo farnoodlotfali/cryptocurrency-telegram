@@ -157,7 +157,7 @@
                     </div>
                     <!-- /.card-body -->
                     <div class="card-footer">
-                      <a href="{% url 'Panel:statistic' %}" class="btn btn-danger btn-outline px-5" >
+                      <a href="{% url 'Panel:predict_stat' %}" class="btn btn-danger btn-outline px-5" >
                         Reset
                       </a>
                       <button type="submit" class="btn btn-primary px-5">
@@ -175,13 +175,12 @@
           <div class="container-fluid">
             <div class="row">
 
-              <!-- Criteria (we assume FAILED WITH PROFIT is FAILED)  -->
               <div class="col-md-12 ">
-                <div class="card card-warning ">
+                <div class="card card-navy ">
                   <div class="card-header">
                     <h3 class="card-title">
                       <i class="fas fa-chess mr-1"></i>
-                      Criteria <small>(we assume FAILED WITH PROFIT is <strong class="text-danger">FAILED</strong>)</small>
+                      Criteria 
                     </h3>
 
                     <div class="card-tools">
@@ -212,10 +211,11 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Total Trade</span>
-                              <span class="info-box-number">{{ criteria.total }}</span>
+                              <span class="info-box-number">{{ total_count }}</span>
                             </div>
                           </div>
-                        </div>
+                        </div> 
+                        
                         <div class="col-md-2 col-sm-6 col-12">
                           <div class="info-box border border-dark">
                             <span class="info-box-icon bg-lime">
@@ -224,7 +224,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Win Count</span>
-                              <span class="info-box-number">{{ criteria.win_count }}</span>
+                              <span class="info-box-number">{{ win_count }}</span>
                             </div>
                           </div>
                         </div>
@@ -236,7 +236,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Loss Count</span>
-                              <span class="info-box-number">{{ criteria.loss_count }}</span>
+                              <span class="info-box-number">{{ loss_count }}</span>
                             </div>
                           </div>
                         </div>
@@ -248,7 +248,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Win Rate</span>
-                              <span class="info-box-number">{{ criteria.win_rate|round_number:5 }}</span>
+                              <span class="info-box-number">{{ win_rate|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -260,7 +260,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Loss Rate</span>
-                              <span class="info-box-number">{{ criteria.loss_rate|round_number:5 }}</span>
+                              <span class="info-box-number">{{ loss_rate|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -272,7 +272,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Gross Profit</span>
-                              <span class="info-box-number">{{ criteria.gross_profit|round_number:5 }}</span>
+                              <span class="info-box-number">{{ gross_profit|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -284,7 +284,19 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Gross Loss</span>
-                              <span class="info-box-number">{{ criteria.gross_loss|round_number:5 }}</span>
+                              <span class="info-box-number">{{ gross_loss|floatformat:2 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 col-12">
+                          <div class="info-box border border-dark">
+                            <span class="info-box-icon bg-yellow">
+                              <i class="fa fa-arrows-alt-h"></i>
+                            </span>
+                          
+                            <div class="info-box-content ">
+                              <span class="info-box-text">Total Gross</span>
+                              <span class="info-box-number">{{ total_gross|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -296,7 +308,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Average Win</span>
-                              <span class="info-box-number">{{ criteria.average_win|round_number:5 }}</span>
+                              <span class="info-box-number">{{ average_win|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -308,7 +320,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Average Loss</span>
-                              <span class="info-box-number">{{ criteria.average_loss|round_number:5 }}</span>
+                              <span class="info-box-number">{{ average_loss|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -320,7 +332,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Expectancy</span>
-                              <span class="info-box-number">{{ criteria.expectancy|round_number:5 }}</span>
+                              <span class="info-box-number">{{ expectancy|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -332,7 +344,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Profit Factor</span>
-                              <span class="info-box-number">{{ criteria.profit_factor|abs_number|round_number:5 }}</span>
+                              <span class="info-box-number">{{ profit_factor|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -344,7 +356,7 @@
                           
                             <div class="info-box-content ">
                               <span class="info-box-text">Payoff Ratio</span>
-                              <span class="info-box-number">{{ criteria.payoff_ratio|abs_number|round_number:5 }}</span>
+                              <span class="info-box-number">{{ payoff_ratio|floatformat:2 }}</span>
                             </div>
                           </div>
                         </div>
@@ -356,191 +368,11 @@
 
               </div>
 
-              <!-- Criteria (we assume FAILED WITH PROFIT is SUCCESS)  -->
-              <div class="col-md-12 ">
-                <div class="card card-navy">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="fas fa-chess mr-1"></i>
-                      Criteria <small>(we assume FAILED WITH PROFIT is <strong class="text-lime" >SUCCESS</strong>)</small>
-                    </h3>
-
-                    <div class="card-tools">
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="collapse"
-                      >
-                        <i class="fas fa-minus"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="remove"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="container-fluid">
-                      <div class="row">
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-info">
-                              <i class="fa fa-mountain"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Total Trade</span>
-                              <span class="info-box-number">{{ criteria.total }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-lime">
-                              <i class="fa fa-arrow-up"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Win Count</span>
-                              <span class="info-box-number">{{ criteria.win_count_just_success }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-red">
-                              <i class="fa fa-arrow-down"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Loss Count</span>
-                              <span class="info-box-number">{{ criteria.loss_count_without_success }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-lime">
-                              <i class="fa fa-arrow-up"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Win Rate</span>
-                              <span class="info-box-number">{{ criteria.win_rate_just_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-red">
-                              <i class="fa fa-arrow-down"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Loss Rate</span>
-                              <span class="info-box-number">{{ criteria.loss_rate_without_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-lime">
-                              <i class="far fa-laugh"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Gross Profit</span>
-                              <span class="info-box-number">{{ criteria.gross_profit_just_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-red">
-                              <i class="fa fa-sad-cry"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Gross Loss</span>
-                              <span class="info-box-number">{{ criteria.gross_loss_without_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-lime">
-                              <i class="far fa-thumbs-up"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Average Win</span>
-                              <span class="info-box-number">{{ criteria.average_win_just_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-red">
-                              <i class="far fa-thumbs-down"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Average Loss</span>
-                              <span class="info-box-number">{{ criteria.average_loss_without_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-fuchsia">
-                              <i class="fa fa-blind"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Expectancy</span>
-                              <span class="info-box-number">{{ criteria.expectancy_just_success|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-green">
-                              <i class="fa fa-money-bill-wave"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Profit Factor</span>
-                              <span class="info-box-number">{{ criteria.profit_factor_just_success|abs_number|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12">
-                          <div class="info-box border border-dark">
-                            <span class="info-box-icon bg-green">
-                              <i class="fa fa-money-bill-alt"></i>
-                            </span>
-                          
-                            <div class="info-box-content ">
-                              <span class="info-box-text">Payoff Ratio</span>
-                              <span class="info-box-number">{{ criteria.payoff_ratio_just_success|abs_number|round_number:5 }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-
-              </div>
 
               <div class="col-md-12">
                 <div class="card card-success">
                   <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> Statistic Table</h3>
+                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> Status of Statuses</h3>
 
                     <div class="card-tools">
                       <button
@@ -573,7 +405,7 @@
                       </thead>
                       <tbody>
 
-                        {% for item in results %}
+                        {% for item in status_status %}
                           <tr>
                             <th 
                               class="{{ item.status__name|status_color }}"
@@ -583,7 +415,7 @@
                             </th>
                             <th>
                               <!-- profit-->
-                              {{item.total_profit}}
+                              {{item.total_profit|floatformat:2}}
                             </th>
                             <th>
                               <!-- count -->
@@ -607,169 +439,10 @@
 
               </div>
 
-              <div class="col-md-6">
-                <div class="card card-purple">
-                  <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-chart-pie mr-1"></i> Status Statistic(Count) Chart </h3>
-
-                    <div class="card-tools">
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="collapse"
-                      >
-                        <i class="fas fa-minus"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="remove"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <canvas
-                      id="pieChart"
-                      style="
-                        min-height: 250px;
-                        height: 250px;
-                        max-height: 250px;
-                        max-width: 100%;
-                      "
-                    ></canvas>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-
-              </div>
-              
-              <div class="col-md-6" >
-                <div class="card card-teal">
-                  <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-chart-pie mr-1"></i> Status Statistic(Profit) Chart </h3>
-
-                    <div class="card-tools">
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="collapse"
-                      >
-                        <i class="fas fa-minus"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="remove"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <canvas
-                      id="pieChart1"
-                      style="
-                        min-height: 250px;
-                        height: 250px;
-                        max-height: 250px;
-                        max-width: 100%;
-                      "
-                    ></canvas>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-
-              </div>
-
-              <div class="col-md-6" >
-                <div class="card card-success">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="fas fa-chess-bishop mr-1"></i>
-                      Profit Chart</h3>
-
-                    <div class="card-tools">
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="collapse"
-                      >
-                        <i class="fas fa-minus"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="remove"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="chart">
-                      <canvas
-                        id="barChart"
-                        style="
-                          min-height: 250px;
-                          height: 250px;
-                          max-height: 250px;
-                          max-width: 100%;
-                        "
-                      ></canvas>
-                    </div>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-              </div>
-
-              <div class="col-md-6" >
-                <div class="card card-purple">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="fas fa-chess-knight mr-1"></i>
-                      Take-Profit Index Activation</h3>
-
-                    <div class="card-tools">
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="collapse"
-                      >
-                        <i class="fas fa-minus"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-tool"
-                        data-card-widget="remove"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <small class="text-muted">FWP_is_failed: We assume FAILED WITH PROFIT is Failed, So we remove predicts with status of FAILED WITH PROFIT and include SUCCESS status </small>
-                    <div class="chart">
-                      <canvas
-                        id="barChart1"
-                        style="
-                          min-height: 250px;
-                          height: 250px;
-                          max-height: 250px;
-                          max-width: 100%;
-                        "
-                      ></canvas>
-                    </div>
-                  </div>
-                  <!-- /.card-body -->
-                </div>
-              </div>
-
               <div class="col-md-12">
                 <div class="card card-orange  ">
                   <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> TP Table</h3>
+                    <h3 class="card-title"><i class="fas fa-table mr-1"></i>Activation TP Status</h3>
 
                     <div class="card-tools">
                       <button
@@ -796,27 +469,27 @@
                       <thead>
                         <tr>
                           <th scope="col">TP index</th>
-                          <th scope="col">Total Profit(Percentage)</th>
                           <th scope="col">Count</th>
+                          <th scope="col">Total Profit(Percentage)</th>
                         </tr>
                       </thead>
                       <tbody>
 
-                        {% for item in tp_index_profits_array %}
+                        {% for item in tp_status %}
                           <tr>
                             <th 
                               class="{% if item.status__name == 'SUCCESS' %} text-lime {% elif item.status__name == 'FAILED' or  item.status__name == 'CANCELED' %} text-danger {% elif item.status__name == 'FULLTARGET' %} text-green  {% elif item.status__name == 'FAILED WITH PROFIT' %} text-orange {% elif item.status__name == 'PENDING' %} text-gray {% endif %}"
                             >
-                              <!-- name -->
-                              {{item.name}}
+                              <!-- tp_index -->
+                              {{item.tp_index}}
                             </th>
                             <th>
-                              <!-- profit-->
-                              {{item.profit}}
-                            </th>
-                            <th>
-                              <!-- count -->
+                              <!-- count-->
                               {{item.count}}
+                            </th>
+                            <th>
+                              <!-- total_profit -->
+                              {{item.total_profit|floatformat:2}}
 
                             </th>
                           </tr>
@@ -826,8 +499,8 @@
                       <tfoot>
                         <tr>
                           <th scope="col">TP index</th>
-                          <th scope="col">Total Profit(Percentage)</th>
                           <th scope="col">Count</th>
+                          <th scope="col">Total Profit(Percentage)</th>
                         </tr>
                       </tfoot>
                     </table>
@@ -877,8 +550,7 @@
     <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js" ></script>
    <script>
       $(document).ready(function () {
-        loadCriteriaChart(`/panel/chart/channel-criteria?dateFrom=${document.getElementById('dateFrom').value}&dateTo=${document.getElementById('dateTo').value}&position=${document.getElementById('position').value}&channel=${document.getElementById('channel').value}&symbol=${document.getElementById('symbol').value}`);
-        loadTpIndexChart(`/panel/chart/tp-index?dateFrom=${document.getElementById('dateFrom').value}&dateTo=${document.getElementById('dateTo').value}&position=${document.getElementById('position').value}&channel=${document.getElementById('channel').value}&symbol=${document.getElementById('symbol').value}`);
+        // loadTpIndexChart(`/panel/chart/tp-index?dateFrom=${document.getElementById('dateFrom').value}&dateTo=${document.getElementById('dateTo').value}&position=${document.getElementById('position').value}&channel=${document.getElementById('channel').value}&symbol=${document.getElementById('symbol').value}`);
       });
       $(function () {
         //Initialize Select2 Elements
@@ -921,273 +593,12 @@
             // search: {
             //   search: "12",
             // },
-            order: [[2, "desc"]],
+            order: [[0, "asc"]],
           })
           .buttons()
           .container()
           .appendTo("#example2_wrapper .col-md-6:eq(0)");
       });
-
-
-      function loadCriteriaChart(endpoint) {
-        $.ajax({
-          url: endpoint,
-          type: "GET",
-          dataType: "json",
-          success: (jsonResponse) => {
-            const COLORS = {
-              'FAILED WITH PROFIT':"#fd7e14",
-              "PENDING":"#d2d6de",
-              "SUCCESS":"#0f0",
-              "FULLTARGET":"#00a65a",
-              "CANCELED":"#f00141",
-              "FAILED":"#f00",
-              "FAILED WITH PROFIT (JUST SUCCESS)":"#513b06",
-            }
-            
-            let labels = []
-            let profits = []
-            let counts = []
-            let colors = []
-
-            Object.entries(jsonResponse).forEach(([key,val])=>{
-              labels.push(key)
-              profits.push(val.total_profit)
-              counts.push(val.count)
-              colors.push(COLORS[key])
-            })
-
-          
-            var pieChartCanvas = $("#pieChart").get(0).getContext("2d");
-            var pieChartCanvas1 = $("#pieChart1").get(0).getContext("2d");
-            var pieData = {
-                labels: labels,
-                datasets: [
-                  {
-                    data: counts,
-                    backgroundColor: colors,
-                  },
-                ],
-            };
-            var pieData1 = {
-                labels: labels,
-                datasets: [
-                  {
-                    data: profits,
-                    backgroundColor: colors,
-                  },
-                ],
-            };
-            var pieOptions = {
-              maintainAspectRatio: false,
-              responsive: true,
-              legend: {
-                labels: {
-                  fontColor: "#fff",
-                },
-              },
-              plugins: {
-                labels: {
-                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
-                  render: 'percentage',
-                  precision: 0,
-                  showZero: true,
-                  fontSize: 12,
-                  fontColor: '#fff',
-                  fontStyle: 'normal',
-                  textShadow: true,
-                  shadowBlur: 10,
-                  shadowOffsetX: -5,
-                  shadowOffsetY: 5,
-                  shadowColor: 'rgba(255,0,0,0.75)',
-                  // arc: true,
-                  position: 'default',
-                  overlap: true,
-                  showActualPercentages: true,
-                  textMargin: 4
-                }
-              }
-            };
-            //Create pie or douhnut chart
-            // You can switch between pie and douhnut using the method below.
-            new Chart(pieChartCanvas, {
-              type: "pie",
-              data: pieData,
-              options: pieOptions,
-            });  
-            new Chart(pieChartCanvas1, {
-              type: "pie",
-              data: pieData1,
-              options: pieOptions,
-            });
-
-            
-            var areaChartData = {
-              labels: labels,
-              datasets: [
-                {
-                  label: "Profits",
-                  backgroundColor: "rgba(60,141,188,0.9)",
-                  borderColor: "rgba(60,141,188,0.8)",
-                  pointRadius: false,
-                  pointColor: "#3b8bba",
-                  pointStrokeColor: "rgba(60,141,188,1)",
-                  pointHighlightFill: "#fff",
-                  pointHighlightStroke: "rgba(60,141,188,1)",
-                  data: profits.map(l=> Number(l).toFixed(2)),
-                },
-              ],
-            };
-
-
-            var barChartCanvas = $("#barChart").get(0).getContext("2d");
-            var barChartData = $.extend(true, {}, areaChartData);
-            var temp0 = areaChartData.datasets[0];
-            barChartData.datasets[0] = temp0;
-
-            var barChartOptions = {
-              responsive: true,
-              maintainAspectRatio: false,
-              datasetFill: false,
-              legend: {
-                labels: {
-                  fontColor: "#fff",
-                },
-              }, 
-              plugins: {
-                labels: {
-                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
-                  render: 'value',
-                  showZero: true,
-                  fontSize: 12,
-                  fontColor: '#fff',
-                }
-              },
-              scales: {
-              xAxes: [{
-                ticks: {
-                  fontColor: "#fff",
-                },
-                gridLines: {
-                  color: "#ffffff61" 
-                }
-              }],
-              yAxes: [{
-                ticks: {
-                  fontColor: "#fff", 
-                },
-                gridLines: {
-                  color: "#ffffff61" 
-                }
-              }]
-            }
-            };
-
-            new Chart(barChartCanvas, {
-              type: "bar",
-              data: barChartData,
-              options: barChartOptions,
-            });
-
-          },
-          error: () =>
-            console.log("Failed to fetch chart data from " + endpoint + "!"),
-        });
-      }
-
-      function loadTpIndexChart(endpoint) {
-        $.ajax({
-          url: endpoint,
-          type: "GET",
-          dataType: "json",
-          success: (jsonResponse) => {
-          
-            var areaChartData = {
-              labels: Object.keys(jsonResponse['FWP_is_success']),
-              datasets: [
-                {
-                  label: "FWP_is_success",
-                  backgroundColor: "#513B06",
-                  borderColor: "#513B06",
-                  pointRadius: false,
-                  pointColor: "#513B06",
-                  pointStrokeColor: "#513B06",
-                  pointHighlightFill: "#fff",
-                  pointHighlightStroke: "#513B06",
-                  data: Object.values(jsonResponse['FWP_is_success']),
-                },
-                {
-                  label: "FWP_is_failed",
-                  backgroundColor: "#FD7C11",
-                  borderColor: "#FD7C11",
-                  pointRadius: false,
-                  pointColor: "#FD7C11",
-                  pointStrokeColor: "#FD7C11",
-                  pointHighlightFill: "#fff",
-                  pointHighlightStroke: "#FD7C11",
-                  data: Object.values(jsonResponse['FWP_is_failed']),
-                },
-              ],
-            };
-
-
-            var barChartCanvas = $("#barChart1").get(0).getContext("2d");
-            var barChartData = $.extend(true, {}, areaChartData);
-            var temp0 = areaChartData.datasets[0];
-            var temp1 = areaChartData.datasets[1];
-            barChartData.datasets[0] = temp0;
-            barChartData.datasets[1] = temp1;
-
-            var barChartOptions = {
-              responsive: true,
-              maintainAspectRatio: false,
-              datasetFill: false,
-              legend: {
-                labels: {
-                  fontColor: "#fff",
-                },
-              }, 
-              plugins: {
-                labels: {
-                  // render 'label', 'value', 'percentage', 'image' or custom function, default is 'percentage'
-                  render: 'value',
-                  showZero: true,
-                  fontSize: 12,
-                  fontColor: '#fff',
-                }
-              },
-              scales: {
-              xAxes: [{
-                ticks: {
-                  fontColor: "#fff",
-                },
-                gridLines: {
-                  color: "#ffffff61" 
-                }
-              }],
-              yAxes: [{
-                ticks: {
-                  fontColor: "#fff", 
-                },
-                gridLines: {
-                  color: "#ffffff61" 
-                }
-              }]
-            }
-            };
-
-            new Chart(barChartCanvas, {
-              type: "bar",
-              data: barChartData,
-              options: barChartOptions,
-            });
-
-          },
-          error: () =>
-            console.log("Failed to fetch chart data from " + endpoint + "!"),
-        });
-      }
-
 
 
     </script>

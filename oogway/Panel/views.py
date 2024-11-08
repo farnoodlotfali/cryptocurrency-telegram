@@ -1,10 +1,7 @@
-from bingx.api import BingxAPI
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from dotenv import dotenv_values
 from PostAnalyzer.models import (
     Channel,
     EntryTarget,
@@ -18,50 +15,31 @@ from PostAnalyzer.models import (
     PositionSide,
     StopLoss
 )
-from telethon.sync import TelegramClient, events
-from telethon.errors import SessionPasswordNeededError
-import asyncio
-from django.db.models import Count,Q,Sum, F
-import datetime
-from django.forms.models import model_to_dict
-from django import template
-from Shared.Exchange import exchange
-from django.template import RequestContext
-
-config = dotenv_values(".env")
-API_KEY = config["API_KEY"]
-SECRET_KEY = config["SECRET_KEY"]
-bingx = BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
+from django.db.models import Count, Sum, Max, Case, When, IntegerField, FloatField
+from Shared.Constant import PostStatusValues
+from django.db.models.functions import TruncMonth
 
 LOGIN_PAGE_URL = "/panel/login"
-
-
 
 # HTTP Error 404
 @login_required(login_url=LOGIN_PAGE_URL)
 def custom_404_view(request, exception):
     return render(request, '404.html', status=404)
 
-def get_posts_api(request):
-    posts = Post.objects.all()  # Fetch all posts from the database
-    data = serializers.serialize("json", posts)
-
-    return JsonResponse(data, safe=False)
-
-
-def get_symbols_api(request):
-    symbols = Symbol.objects.all()  # Fetch all symbols from the database
-    data = serializers.serialize("json", symbols)
-    # print(symbols)
-    return JsonResponse(data, safe=False)
-
 
 @login_required(login_url=LOGIN_PAGE_URL)
 def home(request):
     channels = Channel.objects.all()
     predicts = Predict.objects.all()
+    posts = Post.objects.all()
+    Markets = Market.objects.all()
+    predicts_status = predicts.values('status__name').annotate(count=Count('id')).order_by('status__name')
     
-    return render(request, "Home/home.html", {"channels": channels,"predicts": predicts})
+    return render(request, "Home/home.html", {"channels": channels,
+                                              "predicts": predicts,
+                                              "predicts_status": predicts_status,
+                                              "posts": posts,
+                                              "Markets": Markets})
 
 def advance_test(request):
     return render(request, "advanced.html")
@@ -111,34 +89,16 @@ def get_predicts(request):
     
     symbols = Symbol.objects.all()
     channels = Channel.objects.all()
-    # result = Predict.objects.filter(
-    #     Q(status__name='FAILED') 
-    #     # Q(status__name='SUCCESS') | Q(status__name='FAILED WITH PROFIT')
-    # )
-
-    # # print(result)
-    # total_profit = 0
-    # for x in result:
-    #     total_profit +=x.profit
-    # print(total_profit)
-    # max_date = datetime.date(2024, 6, 24)
-    # min_date = datetime.date(2024, 6, 12)
-
-    # results = Predict.objects.filter(
-    #     date__lte=max_date,
-    #     date__gte=min_date,
-    #     position__name="SHORT"
-    # ).values('status__name').annotate(
-    # total_profit=Sum(F('profit')),
-    # count_profit=Count('profit'),
-    
-    # )
-    # print(results)
-    
+   
     return render(
         request,
         "Predict/index.html",
-        {"predicts": predicts, "symbols": symbols, "symbol_param": symbol_param, "channels": channels, "channel_param": channel_param,},
+        {"predicts": predicts,
+        "symbols": symbols,
+        "symbol_param": symbol_param,
+        "channels": channels,
+        "channel_param": channel_param,
+        },
     )
 
 
@@ -149,7 +109,7 @@ def channel_list(request):
     return render(request, "Channel/channelList.html", {"channels": channels})
 
 
-# channels
+# change channel trade
 @login_required(login_url=LOGIN_PAGE_URL)
 def change_channel_trade(request, channel_id):
     channel = Channel.objects.get(channel_id=channel_id)
@@ -162,7 +122,14 @@ def change_channel_trade(request, channel_id):
 @login_required(login_url=LOGIN_PAGE_URL)
 def channel_detail(request, channel_id):
     channel = get_object_or_404(Channel, channel_id=channel_id)
-    return render(request, "Channel/channelDetail.html", {"channel": channel})
+    predicts = Predict.objects.filter(post__channel=channel)
+    success_predicts = predicts.filter(profit__gt=0)
+    failed_predicts = predicts.filter(profit__lt=0)
+    return render(request, "Channel/channelDetail.html", { "channel": channel,
+                                                          "predicts": predicts,
+                                                          "success_predicts": success_predicts,
+                                                          "failed_predicts": failed_predicts,
+                                                          })
 
 
 # posts list
@@ -205,23 +172,6 @@ def post_detail(request, post_id):
     )
 
 
-
-# cancel order
-@login_required(login_url=LOGIN_PAGE_URL)
-def cancel_order(request, symbol, order_id=None, market=None):
-    try:
-        # exchange.cancel_order(id=order_id,symbol=SymbolConverter(symbol, market))
-        # predict = Predict.objects.get(order_id=order_id)
-        # cancelStatus = PostStatus.objects.get(name="CANCELED")
-        # predict.status = cancelStatus
-        # predict.save()
-        pass
-    except:
-        print("error")
-    # data = serializers.serialize("json", order_data)
-
-    return redirect("Panel:predict")
-
 # change predict status
 @login_required(login_url=LOGIN_PAGE_URL)
 def change_predict_status(request, predict_id, status):
@@ -235,198 +185,6 @@ def change_predict_status(request, predict_id, status):
 
     return redirect("Panel:predict")
 
-def tp_index_stat(request):
-    position_param = request.GET.get("position")
-    dateTo_param = request.GET.get("dateTo")
-    dateFrom_param = request.GET.get("dateFrom")
-    channel_param = request.GET.get("channel")
-    symbol_param = request.GET.get("symbol")
-    # print(channel_param)
-
-    query_filters = {}
-    if channel_param:
-        query_filters['post__channel__channel_id'] = channel_param 
-    if position_param:
-        query_filters['position__name'] = position_param
-    if dateTo_param:
-        query_filters['date__lte'] = dateTo_param
-    if dateFrom_param:
-        query_filters['date__gte'] = dateFrom_param
-    if symbol_param:
-        query_filters['symbol__name'] = symbol_param
-     # *****************************************
-    tp_indexes = Predict.objects.filter(Q(status__name="FAILED WITH PROFIT") | Q(status__name="FULLTARGET")| Q(status__name="SUCCESS"),**query_filters)
-
-    tp_indexes_stat = {
-        "FWP_is_success":{
-            "tp1":0,
-            "tp2":0,
-            "tp3":0,
-            "tpBIG":0,
-            "full":0,
-        },
-        "FWP_is_failed":{
-            "tp1":0,
-            "tp2":0,
-            "tp3":0,
-            "tpBIG":0,
-            "full":0,
-        },
-        "profits":{
-            "tp1": {"profit":0,"count":0},
-            "tp2":{"profit":0,"count":0},
-            "tp3":{"profit":0,"count":0},
-            "tpBIG":{"profit":0,"count":0},
-            "full":{"profit":0,"count":0},
-        },
-        
-    }   
-  
-    for pr in tp_indexes:
-        tp = TakeProfitTarget.objects.filter(predict=pr, active=True).order_by('-index').first()
-        index = int(tp.index)+1
-        # print(pr.symbol.name,index)
-        if index == 1:
-            if pr.status.name != "FAILED WITH PROFIT":
-                tp_indexes_stat["FWP_is_failed"]["tp1"] +=1
-
-            tp_indexes_stat["FWP_is_success"]["tp1"] +=1
-            tp_indexes_stat["profits"]["tp1"]['profit'] += float(tp.profit)
-            tp_indexes_stat["profits"]["tp1"]['count'] += 1
-        elif index == 2:
-            if pr.status.name != "FAILED WITH PROFIT":
-                tp_indexes_stat["FWP_is_failed"]["tp2"] +=1
-
-            tp_indexes_stat["FWP_is_success"]["tp2"] +=1
-            tp_indexes_stat["profits"]["tp2"]['profit'] += float(tp.profit)
-            tp_indexes_stat["profits"]["tp2"]['count'] += 1
-
-        elif index == 3:
-            if pr.status.name != "FAILED WITH PROFIT":
-                tp_indexes_stat["FWP_is_failed"]["tp3"] +=1
-
-            tp_indexes_stat["FWP_is_success"]["tp3"] +=1
-            tp_indexes_stat["profits"]["tp3"]['profit'] += float(tp.profit)
-            tp_indexes_stat["profits"]["tp3"]['count'] += 1
-
-        elif index > 3:
-            if pr.status.name == "FULLTARGET":
-                tp_indexes_stat["FWP_is_failed"]["full"] +=1
-                tp_indexes_stat["FWP_is_success"]["full"] +=1
-                tp_indexes_stat["profits"]["full"]['profit'] += float(tp.profit)
-                tp_indexes_stat["profits"]["full"]['count'] += 1
-
-            else:
-                if pr.status.name != "FAILED WITH PROFIT":
-                    tp_indexes_stat["FWP_is_failed"]["tpBIG"] +=1
-
-                tp_indexes_stat["FWP_is_success"]["tpBIG"] +=1
-                tp_indexes_stat["profits"]["tpBIG"]['profit'] += float(tp.profit)
-                tp_indexes_stat["profits"]["tpBIG"]['count'] += 1
-            
-   
-    return tp_indexes_stat
-
-# charts
-def predict_status_chart(request):
-    statuses = PostStatus.objects.all()
-
-    status_dict = dict()
-
-    for status in statuses:
-        status_dict[status.name] = 0
-
-    grouped_predictions = (Predict.objects.values('status__name').annotate(prediction_count=Count('id')))
-
-    for group in grouped_predictions:
-        status_dict[group['status__name']] = group["prediction_count"]
-
-
-    predictsGroup = {
-        "labels": list(status_dict.keys()),
-        "data": list(status_dict.values()),
-    }
-
-    return JsonResponse(predictsGroup)
-
-def channel_predict_status_chart(request):
-    statuses = PostStatus.objects.all()
-
-    channel_counts = Channel.objects.values('name').annotate(
-        **{status.name: Count('post__predict__status', filter=Q(post__predict__status__name=status.name)) for status in statuses}
-    )
-
-    # print(channel_counts)
-
-    channel_status_count_dict = {}
-
-    for channel in channel_counts:
-        channel_name = channel['name']
-        channel_status_count_dict[channel_name] = {
-           status.name: channel[status.name] for status in statuses
-        }
-
-    # print(list(channel_status_count_dict.keys()))
-    # print(list(channel_status_count_dict.values()))
-
-    
-    return JsonResponse({
-        "labels": list(channel_status_count_dict.keys()),
-        "data": list(channel_status_count_dict.values()),
-    })
-
-def criteria_chart_for_channel(request):
-    position_param = request.GET.get("position")
-    dateTo_param = request.GET.get("dateTo")
-    dateFrom_param = request.GET.get("dateFrom")
-    channel_param = request.GET.get("channel")
-    symbol_param = request.GET.get("symbol")
-    
-    # print(channel_param)
-
-    query_filters = {}
-    if channel_param:
-        query_filters['post__channel__channel_id'] = channel_param 
-    if position_param:
-        query_filters['position__name'] = position_param
-    if dateTo_param:
-        query_filters['date__lte'] = dateTo_param
-    if dateFrom_param:
-        query_filters['date__gte'] = dateFrom_param
-    if symbol_param:
-        query_filters['symbol__name'] = symbol_param
-    results = Predict.objects.filter(
-      **query_filters
-    ).values('status__name').annotate(
-        total_profit=Sum(F('profit')),
-        count=Count('profit'),
-    )
-
-    predict_justSuc = Predict.objects.filter(status__name="FAILED WITH PROFIT",**query_filters)
-    t = 0
-    for predict in predict_justSuc:
-        take_profit_target_qs = TakeProfitTarget.objects.filter(post=predict.post, active=True).order_by('-index').first()
-        if take_profit_target_qs:
-            t += (take_profit_target_qs.profit or 0)
-    rs = list(results)
-    rs.append({
-        'status__name': 'FAILED WITH PROFIT (JUST SUCCESS)',
-        'total_profit': t,
-        'count': len(predict_justSuc)
-    })
-
-    result_dict = {}
-    for item in rs:
-        key = item['status__name']
-        profit_count = {'total_profit': item['total_profit'], 'count': item['count']}
-        result_dict[key] = profit_count
-
-    return JsonResponse(result_dict)
-
-
-def tp_index_chart(request):
- 
-    return JsonResponse(tp_index_stat(request))
 
 # settings
 @login_required(login_url=LOGIN_PAGE_URL)
@@ -434,7 +192,7 @@ def get_settings(request):
     setting = SettingConfig.objects.get(id=1)
     return render(request, "Settings/index.html", {"setting": setting})
 
-
+# update settings
 @login_required(login_url=LOGIN_PAGE_URL)
 def update_settings(request):
     settings = SettingConfig.objects.get(id=1)
@@ -452,13 +210,14 @@ def update_settings(request):
 
 
 # statistic
+
+# statistic of predicts
 @login_required(login_url=LOGIN_PAGE_URL)
-def get_statistic(request):
+def get_predicts_stat(request):
     positions = PositionSide.objects.all()
     channels = Channel.objects.all()
-    postStatuses = PostStatus.objects.all()
     symbols = Symbol.objects.all()
-    tp_index_profits = tp_index_stat(request)['profits']
+    # ********************************************************
     
     position_param = request.GET.get("position")
     channel_param = request.GET.get("channel")
@@ -479,134 +238,147 @@ def get_statistic(request):
     if symbol_param:
         query_filters['symbol__name'] = symbol_param
     # print(query_filters)
-    # try:
-    results = Predict.objects.filter(
-    **query_filters
-    ).values('status__name').annotate(
-        total_profit=Sum(F('profit')),
-        count=Count('profit'),
-    )
+
+    # ********************************************************
+
+
+    status_status = Predict.objects.filter(**query_filters).values('status__name').annotate(total_profit=Sum('profit'), count=Count('id')).order_by('status__name')
+   
+
+    # ********************************************************
+
+    predicts_result = Predict.objects.filter(**query_filters).aggregate(
+            gross_loss=Sum(
+                Case(
+                    When(status__name__in=[PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.FAILED.value], then='profit'),
+                    output_field=FloatField()
+                )
+            ),
+            loss_count=Count(
+                Case(
+                    When(status__name__in=[PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.FAILED.value], then=1),
+                    output_field=IntegerField()
+                )
+            ),
+            gross_profit=Sum(
+                Case(
+                    When(status__name__in=[PostStatusValues.SUCCESS.value, PostStatusValues.FULLTARGET.value], then='profit'),
+                    output_field=FloatField()
+                )
+            ),
+            win_count=Count(
+                Case(
+                    When(status__name__in=[PostStatusValues.SUCCESS.value, PostStatusValues.FULLTARGET.value], then=1),
+                    output_field=IntegerField()
+                )
+            ),
+            total_gross=Sum('profit', output_field=FloatField()), 
+            total_count=Count('id', output_field=IntegerField()) 
+        )
+
+    gross_loss = predicts_result['gross_loss']
+    loss_count = predicts_result['loss_count']
+    gross_profit = predicts_result['gross_profit']
+    win_count = predicts_result['win_count']
+    total_count = predicts_result['total_count']
+    total_gross = predicts_result['total_gross']
+
+    loss_rate = loss_count/total_count
+    win_rate = win_count/total_count
+    average_loss = gross_loss/loss_count
+    average_win = gross_profit/win_count
+    expectancy = (win_rate * average_win)-(abs(loss_rate * average_loss))
+    profit_factor =  abs(gross_profit/gross_loss if gross_loss else 1)
+    payoff_ratio = abs(average_win/average_loss if average_loss else 1)
+    # ********************************************************
+
+    tp_query_filters = {}
+    if channel_param:
+        tp_query_filters['predict__post__channel__channel_id'] = channel_param 
+    if position_param:
+        tp_query_filters['predict__position__name'] = position_param
+    if dateTo_param:
+        tp_query_filters['predict__date__lte'] = dateTo_param
+    if dateFrom_param:
+        tp_query_filters['predict__date__gte'] = dateFrom_param
+    if symbol_param:
+        tp_query_filters['predict__symbol__name'] = symbol_param
+
+    tp_query = TakeProfitTarget.objects.filter(active=True, **tp_query_filters).values('predict_id').annotate(tp_index=Count('id'), max_profit=Max('profit'))
+    tp_result = {}
+    for entry in tp_query:
+        tp_index = entry['tp_index']
+        max_profit = entry['max_profit']
+        if tp_index not in tp_result:
+            tp_result[tp_index] = {'count': 0, 'total_profit': 0}
+        tp_result[tp_index]['count'] += 1
+        tp_result[tp_index]['total_profit'] += max_profit
+
     
-    predict_failed_justSuc = Predict.objects.filter(status__name="FAILED WITH PROFIT",**query_filters)
-    t = 0
-    for predict in predict_failed_justSuc:
-        tp = TakeProfitTarget.objects.filter(predict=predict, active=True).order_by('-index').first()
-        # print(predict.symbol.name, int(tp.index)+1)
-        if tp:
-            # total_profit = (((tp.profit or 0)/100) +  1) * 100
-            t += (tp.profit or 0)
-    rs = list(results)
-
-    rs.append({
-        'status__name': 'FAILED WITH PROFIT (JUST SUCCESS)',
-        'total_profit': t,
-        'count': len(predict_failed_justSuc)
-    })
-
-
-    result_dict = {}
-    for st in postStatuses:
-        profit_count = {'total_profit': 0, 'count': 0}
-        result_dict[st.name] = profit_count
-    
-    for item in rs:
-        key = item['status__name']
-        profit_count = {'total_profit': item['total_profit'], 'count': item['count']}
-        result_dict[key] = profit_count
-    
-    # print(result_dict)
-    criteria = {}
-    
-    criteria['win_count'] = result_dict['SUCCESS']['count'] + result_dict['FULLTARGET']['count']
-    criteria['win_count_just_success'] = criteria['win_count'] + result_dict['FAILED WITH PROFIT (JUST SUCCESS)']['count']
-    criteria['loss_count'] = result_dict['FAILED']['count'] + result_dict['FAILED WITH PROFIT']['count']
-    criteria['loss_count_without_success'] = result_dict['FAILED']['count']
-    criteria['total'] = criteria['win_count'] + criteria['loss_count'] + result_dict['PENDING']['count'] + result_dict['CANCELED']['count']
-    
-    criteria['win_rate'] = criteria['win_count']/criteria['total'] if criteria['total'] else 0
-    criteria['win_rate_just_success'] = criteria['win_count_just_success']/criteria['total'] if criteria['total'] else 0
-    
-    criteria['loss_rate'] = criteria['loss_count']/criteria['total'] if criteria['total'] else 0
-    criteria['loss_rate_without_success'] = criteria['loss_count_without_success']/criteria['total'] if criteria['total'] else 0
-    
-    criteria['gross_profit'] = result_dict['SUCCESS']['total_profit'] + result_dict['FULLTARGET']['total_profit']
-    criteria['gross_profit_just_success'] = criteria['gross_profit'] + result_dict['FAILED WITH PROFIT (JUST SUCCESS)']['total_profit']
-
-    criteria['gross_loss'] = result_dict['FAILED']['total_profit'] + result_dict['FAILED WITH PROFIT']['total_profit']
-    criteria['gross_loss_without_success'] = result_dict['FAILED']['total_profit'] 
-
-    criteria["average_win"] = criteria['gross_profit']/criteria['win_count'] if criteria['win_count'] else 0
-    criteria["average_win_just_success"] = criteria['gross_profit_just_success']/criteria['win_count_just_success'] if criteria['win_count_just_success'] else 0
-
-    criteria["average_loss"] = criteria['gross_loss']/criteria['loss_count'] if criteria['loss_count'] else 0
-    criteria["average_loss_without_success"] = criteria['gross_loss_without_success']/criteria['loss_count_without_success'] if criteria['loss_count_without_success'] else 0
-
-    criteria["expectancy"] = (criteria['win_rate']* criteria["average_win"])-(abs(criteria['loss_rate']*criteria["average_loss"]))
-    criteria["expectancy_just_success"] = (criteria['win_rate_just_success']* criteria["average_win_just_success"])-(abs(criteria['loss_rate_without_success']*criteria["average_win_just_success"]))
-
-    criteria["profit_factor"] = criteria['gross_profit']/criteria['gross_loss'] if criteria['gross_loss'] else 0
-    criteria["profit_factor_just_success"] = criteria['gross_profit_just_success']/criteria['gross_loss_without_success'] if criteria['gross_loss_without_success'] else 0
-    # criteria["profit_factor1"] = (criteria['win_rate']* criteria["average_win"])/(criteria['loss_rate']*criteria["average_loss"])
-
-    criteria["payoff_ratio"] = criteria["average_win"]/criteria["average_loss"] if criteria['average_loss'] else 0
-    criteria["payoff_ratio_just_success"] = criteria["average_win_just_success"]/criteria["average_loss_without_success"] if criteria['average_loss_without_success'] else 0
-    tp_index_profits_array = [
-        {'name': key, 'profit': value['profit'], 'count': value['count']} 
-        for key, value in tp_index_profits.items()
+    tp_result_arrange = [
+        {'tp_index': tp_index, 'count': data['count'], 'total_profit': data['total_profit']}
+        for tp_index, data in sorted(tp_result.items())
     ]
-    return render(request, "Statistic/index.html", {"symbols": symbols, "positions": positions, "channels": channels, "results": rs, "query_filters": query_filters, "criteria": criteria, "tp_index_profits_array": tp_index_profits_array})
+    # ********************************************************
+    
+    return render(request, "Statistic/index.html", {"symbols": symbols,
+                                                    "positions": positions,
+                                                    "channels": channels,
+                                                    "status_status": status_status,
+                                                    "query_filters": query_filters,
+                                                    "tp_status": tp_result_arrange,
+                                                    "total_count": total_count,
+                                                    "total_gross": total_gross,
+                                                    "gross_loss": gross_loss,
+                                                    "loss_count": loss_count,
+                                                    "gross_profit": gross_profit,
+                                                    "win_count": win_count,
+                                                    "loss_rate": loss_rate,
+                                                    "win_rate": win_rate,
+                                                    "average_loss": average_loss,
+                                                    "average_win": average_win,
+                                                    "expectancy": expectancy,
+                                                    "profit_factor": profit_factor,
+                                                    "payoff_ratio": payoff_ratio,
+                                                    })
 
     # except:
     #    return render(request, "Statistic/index.html", {"positions": positions, "channels": channels, "results": {}, "query_filters": query_filters, "criteria": {}})
   
    
-    
-
-
-async def set_phone_number(phone_number,token):
-    config = dotenv_values(".env")
-
-    api_id = config["api_id"]
-    api_hash = config["api_hash"]
-
-    username = config["username"]
-    print(1)
-    client = TelegramClient(username, api_id, api_hash)
-    print(2)
-    # await client.start()
-    await client.connect()
-    print( client._phone_code_hash)
-    print(3)
-    # Ensure you're authorized
-    if not await client.is_user_authorized():
-        print(4)
-        if not token:
-            await client.send_code_request(phone_number)
-            print(phone_number)
-            print(5)
-        elif token:
-            print(6)
-            try:
-                print(7)
-                await client.send_code_request(phone_number)
-                await client.sign_in(phone_number,token)
-                print(8)
-            except SessionPasswordNeededError:
-                await client.sign_in(password=input('Password: '))
-                
-            print(9)
-    print(10)
-            
-    # me = await client.get_me()
-
+# statistic of channels
 @login_required(login_url=LOGIN_PAGE_URL)
-def getPhoneNumberAndCode(request):
-    phone_number_param = request.POST.get("phone_number")
-    token_param = request.POST.get("token")
-    
-    if phone_number_param:
-        print(11)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(set_phone_number(phone_number_param,token_param))
-    return render(request, "test.html", {"phone_number": phone_number_param})
+def get_channels_stat(request):
+    return render(request, "Statistic/channel-stat.html", {'stat_per_month': channel_stat_per_month(request),
+                                                           'stat_total': channel_stat_total(request)})
+
+# total statistic of channels
+def channel_stat_total(request):
+    results = (
+        Predict.objects
+        .select_related('post__channel')
+        .values('post__channel__name')
+        .annotate(total_profit=Sum('profit'))
+        .order_by('post__channel__name')
+    )
+    return results
+
+def channel_stat_per_month(request):
+    results = (
+        Predict.objects
+        .select_related('post__channel')
+        .annotate(month=TruncMonth('date'))
+        .values('post__channel__name', 'month')
+        .annotate(total_profit=Sum('profit'))
+        .order_by('month', 'post__channel__name')
+    )
+    return results
+
+def channel_stat_per_month_chart(request):
+    results_list = list(channel_stat_per_month(request))
+    return JsonResponse(results_list, safe=False)
+
+def channel_stat_total_chart(request):
+    results_list = list(channel_stat_total(request))
+    return JsonResponse(results_list, safe=False)
+

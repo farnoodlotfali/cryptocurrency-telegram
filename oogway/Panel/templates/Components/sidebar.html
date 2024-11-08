@@ -75,19 +75,19 @@
         <li class="nav-item">
           <a href="#" class="nav-link {% is_active 'Panel:statistic' %}">
             <i class="nav-icon fas fa-chart-bar"></i>
-            <p>Statistic/Backtest
+            <p>Statistic
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="{% url 'Panel:statistic' %}" class="nav-link {% is_active 'Panel:statistic' %}">
+              <a href="{% url 'Panel:predict_stat' %}" class="nav-link {% is_active 'Panel:predict_stat' %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Predicts</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="../index3.html" class="nav-link">
+              <a href="{% url 'Panel:channel_stat' %}" class="nav-link {% is_active 'Panel:channel_stat' %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Channels</p>
               </a>

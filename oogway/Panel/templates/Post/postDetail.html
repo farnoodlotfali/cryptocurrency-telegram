@@ -503,25 +503,7 @@
 
     <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
 
-    <script>
-      $(document).ready(function () {
-        $("#load-posts-btn").click(function () {
-          $.ajax({
-            url: "/panel/get-posts-api/", // URL mapped to the get_posts view
-            dataType: "json",
-            success: function (response) {
-              // Handle the successful response
-              console.log(JSON.parse(response));
-              // Do something with the posts data, e.g., display it on the page
-            },
-            error: function (xhr, errmsg, err) {
-              // Handle any errors
-              console.log(xhr.status + ": " + xhr.responseText);
-            },
-          });
-        });
-      });
-    </script>
+  
     <script>
       // function logout() {
       //     fetch('{% url 'Panel:logout' %}', {

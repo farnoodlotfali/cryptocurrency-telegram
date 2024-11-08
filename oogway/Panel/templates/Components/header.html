@@ -39,10 +39,27 @@
     </div>
     </li>
     <li class="nav-item">
-    <a class="nav-link"  onclick="logout()" href="#" role="button">
+    <a class="nav-link" onclick="logout()" href="#" role="button">
         <i class="fas fa-sign-out-alt"></i>
     </a>
     </li>
 </ul>
 </nav>
 <!-- /.navbar -->
+<script>
+    function logout() {
+      console.log(333);
+
+        fetch("{% url 'Panel:logout' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/panel/login';
+            }
+        });
+    }
+  </script>

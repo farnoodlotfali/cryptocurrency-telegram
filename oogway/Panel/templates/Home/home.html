@@ -1,4 +1,6 @@
 {% load static %}
+{% load navigation_tags %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -120,14 +122,14 @@
                 <!-- small box -->
                 <div class="small-box bg-warning">
                   <div class="inner">
-                    <h3>-</h3>
+                    <h3>{{posts|length}}</h3>
 
-                    <p>Signal Processed</p>
+                    <p>Posts</p>
                   </div>
                   <div class="icon">
-                    <i class="ion ion-person-add"></i>
+                    <i class="fas fa-comment"></i>
                   </div>
-                  <a href="#" class="small-box-footer"
+                  <a href="{% url 'Panel:post_list' %}" class="small-box-footer"
                     >More info <i class="fas fa-arrow-circle-right"></i
                   ></a>
                 </div>
@@ -137,14 +139,14 @@
                 <!-- small box -->
                 <div class="small-box bg-danger">
                   <div class="inner">
-                    <h3>-</h3>
+                    <h3>{{Markets|length}}</h3>
 
-                    <p>Signal UnProcessed</p>
+                    <p>Markets</p>
                   </div>
                   <div class="icon">
-                    <i class="ion ion-pie-graph"></i>
+                    <i class="fas fa-shopping-cart"></i>
                   </div>
-                  <a href="#" class="small-box-footer"
+                  <a href="{% url 'Panel:market' %}" class="small-box-footer"
                     >More info <i class="fas fa-arrow-circle-right"></i
                   ></a>
                 </div>
@@ -184,44 +186,46 @@
                   </div>
                   <!-- /.card-header -->
                   <div class="card-body">
-                    <canvas
-                      id="pieChart"
-                      style="
-                        min-height: 250px;
-                        height: 250px;
-                        max-height: 250px;
-                        max-width: 100%;
-                      "
-                    ></canvas>
+                    <table
+                      id="example1"
+                      class="table table-bordered table-striped"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">Status name</th>
+                          <th scope="col">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in predicts_status %}
+                          <tr>
+                            <th 
+                              class="{{ item.status__name|status_color }}"
+                            >
+                              <!-- name -->
+                              {{item.status__name}}
+                            </th>
+                            <th>
+                              <!-- count-->
+                              {{item.count}}
+                            </th>
+                          </tr>
+                        {% endfor %}
+
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="col">channel name</th>
+                          <th scope="col">Date(Month)</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               </section>
 
               <!--   Channels Predicts Status -->
-              <section class="col-12 connectedSortable">
-                <div class="card card-purple">
-                  <div class="card-header">
-                    <h3 class="card-title">
-                      <i class="fas fa-chart-pie mr-1"></i>
-                      Channels Predicts Status
-                    </h3>
-                  </div>
-                  <!-- /.card-header -->
-                    <!-- PIE CHART -->
-                      <div class="card-body">
-                        <div class="chart">
-                          <canvas
-                            id="barChart"
-                            style="
-                              min-height: 250px;
-                              height: 250px;
-                              max-height: 250px;
-                              max-width: 100%;
-                            "
-                          ></canvas>
-                        </div>
-                      </div>
-                </div>
-              </section>
+         
             </div>
             <!-- /.row (main row) -->
           </div>
@@ -272,189 +276,12 @@
 
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="{% static 'dist/js/pages/dashboard.js' %}"></script>
-    <script>
-      function logout() {
-          fetch('{% url 'Panel:logout' %}', {
-              method: 'POST',
-              headers: {
-                  'X-CSRFToken': '{{ csrf_token }}'
-              }
-          })
-          .then(response => {
-              if (response.ok) {
-                  window.location.href = '{% url 'Panel:home' %}';
-              }
-          });
-      }
-    </script>
+   
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <!-- ChartJS -->
     <script>
-      const pendingColor = "#f39c12"
-      const successColor = "#00a65a"
-      const failedColor = "#f00"
-      const canceledColor = "#f56954"
       $(document).ready(function () {
-        loadPredictStatusChart("chart/predict-status/");
-        loadChannelsPredictsStatusChart("chart/channel-predict-status/");
       });
-
-      function loadPredictStatusChart( endpoint) {
-        $.ajax({
-          url: endpoint,
-          type: "GET",
-          dataType: "json",
-          success: (jsonResponse) => {
-            var pieChartCanvas = $("#pieChart").get(0).getContext("2d");
-            var donutData = {
-              labels: jsonResponse.labels,
-              datasets: [
-                {
-                  data: jsonResponse.data,
-                  backgroundColor: [pendingColor, successColor,failedColor, canceledColor],
-                },
-              ],
-            };
-            var pieData = donutData;
-            var pieOptions = {
-              maintainAspectRatio: false,
-              responsive: true,
-              legend: {
-                labels: {
-                  fontColor: "#fff",
-                },
-              },
-            };
-            //Create pie or douhnut chart
-            // You can switch between pie and douhnut using the method below.
-            new Chart(pieChartCanvas, {
-              type: "pie",
-              data: pieData,
-              options: pieOptions,
-            });
-          },
-          error: () =>
-            console.log("Failed to fetch chart data from " + endpoint + "!"),
-        });
-      }
-
-      function loadChannelsPredictsStatusChart(endpoint) {
-        $.ajax({
-          url: endpoint,
-          type: "GET",
-          dataType: "json",
-          success: (res) => {
-            const pending = res.data.map((obj) => obj["PENDING"]);
-            const success = res.data.map((obj) => obj["SUCCESS"]);
-            const failed = res.data.map((obj) => obj["FAILED"]);
-            const canceled = res.data.map((obj) => obj["CANCELED"]);
-            const datasets = [
-              {
-                label: "PENDING",
-                backgroundColor: pendingColor,
-                borderColor: pendingColor,
-                pointRadius: false,
-                pointColor: pendingColor,
-                pointStrokeColor: pendingColor,
-                pointHighlightFill: pendingColor,
-                pointHighlightStroke: pendingColor,
-                data: pending,
-              },
-              {
-                label: "SUCCESS",
-                backgroundColor: successColor,
-                borderColor: successColor,
-                pointRadius: false,
-                pointColor: successColor,
-                pointStrokeColor: successColor,
-                pointHighlightFill: successColor,
-                pointHighlightStroke: successColor,
-                data: success,
-              },
-              {
-                label: "FAILED",
-                backgroundColor: failedColor,
-                borderColor: failedColor,
-                pointRadius: false,
-                pointColor: failedColor,
-                pointStrokeColor: failedColor,
-                pointHighlightFill: failedColor,
-                pointHighlightStroke: failedColor,
-                data: failed,
-              },
-              {
-                label: "CANCELED",
-                backgroundColor: canceledColor,
-                borderColor: canceledColor,
-                pointRadius: false,
-                pointColor: canceledColor,
-                pointStrokeColor: canceledColor,
-                pointHighlightFill: canceledColor,
-                pointHighlightStroke: canceledColor,
-                data: canceled,
-              },
-            ];
-
-            var barChartCanvas = $("#barChart").get(0).getContext("2d");
-            var barChartData = $.extend(
-              true,
-              {},
-              {
-                labels: res.labels,
-                datasets: datasets,
-              }
-            );
-
-            var barChartOptions = {
-              responsive: true,
-              maintainAspectRatio: false,
-              datasetFill: false,
-              legend: {
-                labels: {
-                  fontColor: "#fff",
-                },
-              },
-              scales: {
-                yAxes: [
-                  {
-                    ticks: {
-                      fontColor: "#fff",
-                      // fontSize: 18,
-                      // stepSize: 1,
-                      // beginAtZero: true
-                      // forces step size to be 50 units
-                      stepSize: 1,
-                    },
-                    gridLines: {
-                      zeroLineColor: "#fff",
-                      color: "#fff",
-                    },
-                  },
-                ],
-                xAxes: [
-                  {
-                    ticks: {
-                      fontColor: "#fff",
-                    },
-                    gridLines: {
-                      zeroLineColor: "#fff",
-                      color: "#fff",
-                    },
-                  },
-                ],
-              },
-            };
-
-            new Chart(barChartCanvas, {
-              type: "bar",
-              data: barChartData,
-              options: barChartOptions,
-            });
-          },
-          error: () =>
-            console.log("Failed to fetch chart data from " + endpoint + "!"),
-        });
-      }
 
     </script>
     <script>
