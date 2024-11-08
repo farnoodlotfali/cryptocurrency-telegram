@@ -212,12 +212,6 @@
                       </li>
                     </ul>
 
-                    <button
-                      id="load-posts-btn"
-                      class="btn btn-primary btn-block"
-                    >
-                      <b>Follow</b>
-                    </button>
                   </div>
                   <!-- /.card-body -->
                 </div>
@@ -454,7 +448,7 @@
                           <div class="username d-flex justify-content-between">
                             <div>
                               <i class="fas fa-envelope mr-1"></i>
-                              <a href="{% url 'Panel:post_detail' item.id %}">
+                              <a href="{% url 'Panel:predict_detail' item.id %}">
                                 {{item.id}}</a
                               >
                             </div>
@@ -505,19 +499,7 @@
 
   
     <script>
-      // function logout() {
-      //     fetch('{% url 'Panel:logout' %}', {
-      //         method: 'POST',
-      //         headers: {
-      //             'X-CSRFToken': '{{ csrf_token }}'
-      //         }
-      //     })
-      //     .then(response => {
-      //         if (response.ok) {
-      //             window.location.href = '{% url 'Panel:home' %}';
-      //         }
-      //     });
-      // }
+    
     </script>
   </body>
 </html>

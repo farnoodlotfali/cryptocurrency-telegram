@@ -139,9 +139,9 @@ def post_list(request):
     return render(request, "Post/postList.html", {"posts": posts})
 
 
-# post detail
+# predict detail
 @login_required(login_url=LOGIN_PAGE_URL)
-def post_detail(request, post_id):
+def predict_detail(request, post_id):
     post = Post.objects.get(pk=post_id)
 
     related_posts = Post.objects.filter(reply_to_msg_id=post.message_id)
@@ -149,6 +149,7 @@ def post_detail(request, post_id):
     predict = None
     entries = None
     take_profits = None
+    stoploss = None
     if post.is_predict_msg:
 
         predict = Predict.objects.get(post=post)
@@ -160,7 +161,7 @@ def post_detail(request, post_id):
 
     return render(
         request,
-        "Post/postDetail.html",
+        "Predict/predictDetail.html",
         {
             "post": post,
             "related_posts": related_posts,
