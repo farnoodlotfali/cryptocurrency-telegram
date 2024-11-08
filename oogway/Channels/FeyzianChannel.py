@@ -140,6 +140,9 @@ class FeyzianChannel(AbsChannel):
                 predict.profit = 0
             
                 await predict.asave()
+                await EntryTarget.objects.filter(predict=predict).aupdate(active=False, date=None, period=None)
+                await TakeProfitTarget.objects.filter(predict=predict).aupdate(active=False, date=None, period=None)
+                await StopLoss.objects.filter(predict=predict).aupdate(date=None, period=None)
                 return True
                 
             else:
