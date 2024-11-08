@@ -12,7 +12,7 @@ PROFIT_MAX_PROFIT_VALUE_ERROR = 'Error, profit is bigger than MAX_PROFIT_VALUE'
 # will find error in take-profits(TP), entries, stoploss or position
 # in LONG position, if first TP is smaller than second TP, it should return error
 # in LONG position, if first entry is bigger than second entry, it should return error
-def findError(position: str, tps: list[float], entries: list[float], stoploss: float, leverage:Optional[int]= None)-> tuple[bool, str]:
+def findError(position: str, tps: list[float], entries: list[float], stoploss: float, leverage:Optional[int]= None, max_profit_percent:float= MAX_PROFIT_VALUE)-> tuple[bool, str]:
     if position == PositionSideValues.LONG.value:
         prev_tp = tps[0]
         for i in range(1, len(tps)):
@@ -37,7 +37,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
         for et in entries:
             for tp in tps:
                 # error
-                if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
+                if max_profit_percent < findProfit(et, tp, leverage):
                     return True, PROFIT_MAX_PROFIT_VALUE_ERROR
 
 
@@ -65,7 +65,7 @@ def findError(position: str, tps: list[float], entries: list[float], stoploss: f
         for et in entries:
             for tp in tps:
                 # error
-                if MAX_PROFIT_VALUE < findProfit(et, tp, leverage):
+                if max_profit_percent < findProfit(et, tp, leverage):
                     return True, PROFIT_MAX_PROFIT_VALUE_ERROR
             
     # spot

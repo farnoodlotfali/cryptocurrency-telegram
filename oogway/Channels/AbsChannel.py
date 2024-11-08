@@ -18,7 +18,7 @@ from PostAnalyzer.models import (
 from Shared.findError import findError
 from Shared.errorSaver import errorSaver
 from Shared.helpers import print_colored
-from Shared.Constant import PositionSideValues, MarketValues
+from Shared.Constant import PositionSideValues, MarketValues, MAX_PROFIT_VALUE
 import time
 
 # ****************************************************************************************************************************
@@ -35,6 +35,8 @@ class AbsChannel(ABC):
     _channel_id:Optional[int] = None
     # a days that we must wait for finding status of order(signal) in statistics method (such as statistic_PredictParts)
     max_day_wait:int = 15
+    # a value can control unusual profit
+    max_profit_percent:float = MAX_PROFIT_VALUE
     
     # determine if a message is a predict message or not
     @abstractmethod
@@ -146,7 +148,7 @@ class AbsChannel(ABC):
             if not profits:
                 raise Exception("Sorry, cannot find Profits")
             
-            is_error, is_error_message = findError(position.name if market.name != MarketValues.SPOT.value else PositionSideValues.BUY.value, profits, entries, stopLoss, leverage)
+            is_error, is_error_message = findError(position.name if market.name != MarketValues.SPOT.value else PositionSideValues.BUY.value, profits, entries, stopLoss, leverage, self.max_profit_percent)
             if is_error:
                 raise Exception(is_error_message)
 
