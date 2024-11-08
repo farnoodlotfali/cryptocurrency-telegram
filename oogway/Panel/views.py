@@ -284,13 +284,13 @@ def get_predicts_stat(request):
     total_count = predicts_result['total_count']
     total_gross = predicts_result['total_gross']
 
-    loss_rate = loss_count/total_count
-    win_rate = win_count/total_count
-    average_loss = gross_loss/loss_count
-    average_win = gross_profit/win_count
+    loss_rate = loss_count/total_count if total_count else 0
+    win_rate = win_count/total_count if total_count else 0
+    average_loss = gross_loss/loss_count if loss_count else 0
+    average_win = gross_profit/win_count if win_count else 0
     expectancy = (win_rate * average_win)-(abs(loss_rate * average_loss))
-    profit_factor =  abs(gross_profit/gross_loss if gross_loss else 1)
-    payoff_ratio = abs(average_win/average_loss if average_loss else 1)
+    profit_factor =  abs(gross_profit/gross_loss if gross_loss else 0)
+    payoff_ratio = abs(average_win/average_loss if average_loss else 0)
     # ********************************************************
 
     tp_query_filters = {}
