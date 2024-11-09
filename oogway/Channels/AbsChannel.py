@@ -17,7 +17,7 @@ from PostAnalyzer.models import (
 )
 from Shared.findError import findError
 from Shared.errorSaver import errorSaver
-from Shared.helpers import print_colored
+from Shared.helpers import print_colored, convertToJsonFile
 from Shared.Constant import PositionSideValues, MarketValues, MAX_PROFIT_VALUE
 import time
 
@@ -200,7 +200,7 @@ class AbsChannel(ABC):
 
         client: TelegramClient = await TelegramClient(_username, _api_id, _api_hash).start()
         peer_channel =  PeerChannel(int(self._channel_id))
-        feyzian_channel = await client.get_entity(peer_channel)
+        telegram_channel = await client.get_entity(peer_channel)
 
         offset_id = 0
         limit = 100
@@ -215,7 +215,7 @@ class AbsChannel(ABC):
             print("Current Offset ID is:", offset_id, "; Total Messages:", total_messages)
             history = await client(
             GetHistoryRequest(
-                    peer=feyzian_channel,
+                    peer=telegram_channel,
                     offset_id=offset_id,
                     # timestamp not milli timestamp
                     offset_date=offset_date,
@@ -247,7 +247,6 @@ class AbsChannel(ABC):
             #     break
 
         await client.disconnect()
-
 
         this_month = None
         for msg in reversed(all_messages):

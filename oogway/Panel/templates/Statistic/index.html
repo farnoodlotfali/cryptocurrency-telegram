@@ -439,6 +439,7 @@
 
               </div>
 
+
               <div class="col-md-12">
                 <div class="card card-orange  ">
                   <div class="card-header">
@@ -476,6 +477,77 @@
                       <tbody>
 
                         {% for item in tp_status %}
+                          <tr>
+                            <th 
+                              class="{% if item.status__name == 'SUCCESS' %} text-lime {% elif item.status__name == 'FAILED' or  item.status__name == 'CANCELED' %} text-danger {% elif item.status__name == 'FULLTARGET' %} text-green  {% elif item.status__name == 'FAILED WITH PROFIT' %} text-orange {% elif item.status__name == 'PENDING' %} text-gray {% endif %}"
+                            >
+                              <!-- tp_index -->
+                              {{item.tp_index}}
+                            </th>
+                            <th>
+                              <!-- count-->
+                              {{item.count}}
+                            </th>
+                            <th>
+                              <!-- total_profit -->
+                              {{item.total_profit|floatformat:2}}
+
+                            </th>
+                          </tr>
+                        {% endfor %}
+
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th scope="col">TP index</th>
+                          <th scope="col">Count</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+              
+                </div>
+
+              </div>
+
+              <div class="col-md-12">
+                <div class="card card-pink  ">
+                  <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-table mr-1"></i>FAILED WITH PROFIT Closed TP Status</h3>
+
+                    <div class="card-tools">
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="collapse"
+                      >
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-tool"
+                        data-card-widget="remove"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <table
+                      id="example2"
+                      class="table table-bordered table-striped"
+                    >
+                      <thead>
+                        <tr>
+                          <th scope="col">TP index</th>
+                          <th scope="col">Count</th>
+                          <th scope="col">Total Profit(Percentage)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                        {% for item in tp_query_FAILED_WITH_PROFIT %}
                           <tr>
                             <th 
                               class="{% if item.status__name == 'SUCCESS' %} text-lime {% elif item.status__name == 'FAILED' or  item.status__name == 'CANCELED' %} text-danger {% elif item.status__name == 'FULLTARGET' %} text-green  {% elif item.status__name == 'FAILED WITH PROFIT' %} text-orange {% elif item.status__name == 'PENDING' %} text-gray {% endif %}"

@@ -1,10 +1,9 @@
 from dotenv import dotenv_values
 from telethon.sync import TelegramClient, events
 from telethon.tl.types import PeerChannel
-from .classes.BinanceProMsg import BinanceProMsg
-from .classes.RastadMsg import RastadMsg
 from Channels.FeyzianChannel import FeyzianChannel
 from Channels.AliBeyroChannel import AliBeyroChannel
+from Channels.RastadChannel import RastadChannel
 
 
 config = dotenv_values(".env")
@@ -41,9 +40,6 @@ async def get_user_posts_view(request):
                     PeerChannel(int(config["CHANNEL_ALI_BEY"])),
                     PeerChannel(int(config["CHANNEL_TEST_ALI_BEYRANVAND"])),
 
-                    PeerChannel(int(config["CHANNEL_BINANCE_PRO"])),
-                    PeerChannel(int(config["CHANNEL_TEST_BINANCE_PRO"])),
-
                     PeerChannel(int(config["CHANNEL_RASTAD"])),
                     PeerChannel(int(config["CHANNEL_TEST_RASTAD"])),
                 ]
@@ -59,8 +55,6 @@ async def get_user_posts_view(request):
         #             PeerChannel(int(config["CHANNEL_ALI_BEY"])),
         #             PeerChannel(int(config["CHANNEL_TEST_ALI_BEYRANVAND"])),
         
-        #             PeerChannel(int(config["CHANNEL_BINANCE_PRO"])),
-        #             PeerChannel(int(config["CHANNEL_TEST_BINANCE_PRO"])),
         #         ]
         #     ),
         # )
@@ -73,19 +67,16 @@ async def channelFeyzian(msg):
     p1 = FeyzianChannel()
     await p1.extractDataFromMessage(msg)
     
-async def channelTestRastad(msg):
-    p1 = RastadMsg()
-    await p1.extract_data_from_message(msg)
+async def channelRastad(msg):
+    p1 = RastadChannel()
+    await p1.extractDataFromMessage(msg)
 
 
 async def channelAliBeyro(msg):
     p1 = AliBeyroChannel()
     await p1.extractDataFromMessage(msg)
 
-async def channelTestBinancePro(msg):
-    # print(msg)
-    p1 = BinanceProMsg()
-    await p1.extract_data_from_message(msg)
+
 
 
 options = {
@@ -95,10 +86,7 @@ options = {
     int(config["CHANNEL_ALI_BEY"]): channelAliBeyro,
     int(config["CHANNEL_TEST_ALI_BEYRANVAND"]): channelAliBeyro,
 
-    int(config["CHANNEL_BINANCE_PRO"]): channelTestBinancePro,
-    int(config["CHANNEL_TEST_BINANCE_PRO"]): channelTestBinancePro,
-
-    int(config["CHANNEL_RASTAD"]): channelTestRastad,
-    int(config["CHANNEL_TEST_RASTAD"]): channelTestRastad,
+    int(config["CHANNEL_RASTAD"]): channelRastad,
+    int(config["CHANNEL_TEST_RASTAD"]): channelRastad,
 
 }
