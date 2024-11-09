@@ -306,20 +306,27 @@ def get_predicts_stat(request):
         tp_query_filters['predict__symbol__name'] = symbol_param
 
     tp_query = TakeProfitTarget.objects.filter(active=True, **tp_query_filters).values('predict_id').annotate(tp_index=Count('id'), max_profit=Max('profit'))
-    tp_result = {}
-    for entry in tp_query:
-        tp_index = entry['tp_index']
-        max_profit = entry['max_profit']
-        if tp_index not in tp_result:
-            tp_result[tp_index] = {'count': 0, 'total_profit': 0}
-        tp_result[tp_index]['count'] += 1
-        tp_result[tp_index]['total_profit'] += max_profit
-
+    tp_query_FAILED_WITH_PROFIT = TakeProfitTarget.objects.filter(active=True, predict__status__name=PostStatusValues.FAILED_WITH_PROFIT.value, **tp_query_filters).values('predict_id').annotate(tp_index=Count('id'), max_profit=Max('profit'))
     
-    tp_result_arrange = [
-        {'tp_index': tp_index, 'count': data['count'], 'total_profit': data['total_profit']}
-        for tp_index, data in sorted(tp_result.items())
-    ]
+    def findTpResult(queries):
+        tp_result = {}
+        for entry in queries:
+            tp_index = entry['tp_index']
+            max_profit = entry['max_profit']
+            if tp_index not in tp_result:
+                tp_result[tp_index] = {'count': 0, 'total_profit': 0}
+            tp_result[tp_index]['count'] += 1
+            tp_result[tp_index]['total_profit'] += max_profit
+
+        
+        tp_result = [
+            {'tp_index': tp_index, 'count': data['count'], 'total_profit': data['total_profit']}
+            for tp_index, data in sorted(tp_result.items())
+        ]
+        return tp_result
+    
+    tp_result_arrange = findTpResult(tp_query)
+    tp_result_arrange_FAILED_WITH_PROFIT = findTpResult(tp_query_FAILED_WITH_PROFIT)
     # ********************************************************
     
     return render(request, "Statistic/index.html", {"symbols": symbols,
@@ -328,6 +335,7 @@ def get_predicts_stat(request):
                                                     "status_status": status_status,
                                                     "query_filters": query_filters,
                                                     "tp_status": tp_result_arrange,
+                                                    "tp_query_FAILED_WITH_PROFIT": tp_result_arrange_FAILED_WITH_PROFIT,
                                                     "total_count": total_count,
                                                     "total_gross": total_gross,
                                                     "gross_loss": gross_loss,
