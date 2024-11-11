@@ -38,6 +38,11 @@ class MarginModeValues(Enum):
     ISOLATED = 'ISOLATED'
     CROSS = 'CROSS'
 
+class TrendValues(Enum):
+    UPTREND = 'UPTREND'
+    DOWNTREND = 'DOWNTREND'
+    SIDEWAYS = 'SIDEWAYS'
+
 # 60 percent
 MAX_PROFIT_VALUE = 60
 
