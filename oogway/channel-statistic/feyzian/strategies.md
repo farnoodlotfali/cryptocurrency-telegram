@@ -36,16 +36,17 @@ the "my_money" is a initial money.\
 the "close_tp" is a take-profit index that the order must be close. default = 0\
 the "showPrint" is a flag that allow to print a details. default = False\
 the "positionSize" is a mount of money for opening a order. default = 100\
-the "max_percent_stoploss" is a percent that changes the stoploss value according to first entry. default = 5 (%)\
+the "max_percent_stoploss" is a percent that changes the stoploss value according to first entry. default = 5 (%)
 
 ### How It Works
 
-This strategy changes the stoploss value according to "max_percent_stoploss" and first entry and predict position(LONG, SHORT). 
+This strategy changes the stoploss value according to "max_percent_stoploss" and first entry and predict position(LONG, SHORT).
 
-$$
-\text{stop\_loss} = \text{first\_entry} \times \left( 1 + \left( \frac{\text{max\_percent\_stoploss}}{100 \times \text{leverage} \times (1 \text{ if isSHORT else } -1)} \right) \right)
-$$\
 
+<img src="https://latex.codecogs.com/png.image?\dpi{110}\bg{red}&space;stoploss=firstEntry\times\left(1&plus;\left(\frac{maxPercentStoploss}{100\times\text{leverage}\times(1)isShort(-1)}\right)\right)"  />
+
+
+<br/>
 
 it loads OHLC data from a json file.
 it wait until "start_timestamp" reaches.
