@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from django.forms.models import model_to_dict
 from PostAnalyzer.models import (
     Predict,
@@ -8,10 +8,12 @@ import pytz
 from Shared.helpers import print_colored
 from datetime import datetime
 import pandas as pd
-
+import os
 # ***************************************************************************************************************************************************
 
 class AbsStrategy(ABC):
+    strategy_name = 'strategy_name'
+
     time_zone = 'UTC'
     # time_zone = 'Asia/Tehran'
     time_zone_pytz = pytz.timezone(time_zone)
@@ -168,7 +170,7 @@ class AbsStrategy(ABC):
             'active_date': datetime.fromtimestamp(active_date).astimezone(self.time_zone_pytz),
             'symbol': order.symbol.name,
             'profit': 0,
-            'status': "ACTIVE",
+            'status': "ENTRY",
             'status_date': None,
             'status_type': 0,
             'market': order.market.name,
@@ -280,9 +282,22 @@ class AbsStrategy(ABC):
         print_colored(f"my free money: {self.current_money-self.total_pending_money}", "orange")
         print_colored(f"my total money: {self.current_money}", "#d16984")
         print_colored(f"profit_count: {self.profit_count}, loss_count: {self.loss_count}, pending_count: {self.pending_count}, missed_count: {len(self.missed_orders)}", "#a1309d")
+
+        date = datetime.today().date()
+        hour = datetime.today().hour
+        minute = datetime.today().minute
+        second = datetime.today().second
+
+        path_folder = os.path.join(os.path.dirname(__file__), "../strategy-reports")
+        os.makedirs(path_folder, exist_ok=True)
+        df = pd.DataFrame(self.orders_status)
+        df.to_csv(f'{path_folder}/report-{date}-{hour}-{minute}-{second}-{self.strategy_name}.csv', index=False)
+
+        # df = pd.DataFrame(self.history)
+        # df.to_csv(f'{path_folder}/report-{name}-history-{self.strategy_name}.csv', index=False)
         
                 
-
+    
 
 
 
