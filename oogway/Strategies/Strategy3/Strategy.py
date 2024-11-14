@@ -18,10 +18,10 @@ from Shared.Constant import PostStatusValues, PositionSideValues
 def calStoploss(entry:float, leverage:int, isShort:bool, max_percent_stoploss:float):
     return entry*(1+(max_percent_stoploss/(100*leverage*(1 if isShort else -1)))) 
 
-class Strategy2(AbsStrategy):
-    strategy_name = 'strategy2'
+class Strategy3(AbsStrategy):
+    strategy_name = 'strategy3'
 
-    async def backtest_with_money_strategy_2(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, max_percent_stoploss: float=5):
+    async def backtest_with_money_strategy_3(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, max_percent_stoploss: float=5, effect_stoploss:bool=True):
 
         if not (0.5 <= max_percent_stoploss <= 100):
             raise ValueError(f"max_percent_stoploss should be between 0.5 and 100, but got {max_percent_stoploss}")
@@ -62,7 +62,7 @@ class Strategy2(AbsStrategy):
                     lambda: list(TakeProfitTarget.objects.filter(predict=pr).order_by('index'))
                 )()
                 # get stoploss 
-                # stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
+                stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
 
 
                 # load data from JSON file
@@ -82,7 +82,10 @@ class Strategy2(AbsStrategy):
                 start_timestamp = int(pr.date.timestamp() * 1000)
                 profit = 0
             
-                stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, max_percent_stoploss)
+                if effect_stoploss:
+                    stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, max_percent_stoploss)
+                else:
+                    stop_loss = stoploss.value
 
                 # add positionSize to pending money
                 self.total_pending_money += positionSize
@@ -186,10 +189,7 @@ class Strategy2(AbsStrategy):
                                 self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
                                 self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
                                 tp = take_profit[tp_turn].value
-                                if tp_turn == 1:
-                                    stop_loss = entry_price[0].value
-                                else:
-                                    stop_loss = take_profit[tp_turn-2].value
+                                
                 else:
                     for row in LData:
                         if row[0] < start_timestamp:
@@ -252,10 +252,6 @@ class Strategy2(AbsStrategy):
                                 self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
                                 self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
                                 tp = take_profit[tp_turn].value
-                                if tp_turn == 1:
-                                    stop_loss = entry_price[0].value
-                                else:
-                                    stop_loss = take_profit[tp_turn-2].value
 
                 self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
 

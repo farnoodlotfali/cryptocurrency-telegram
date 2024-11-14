@@ -275,12 +275,12 @@ class AbsStrategy(ABC):
     def report(self):
         print_colored(f"initial money: {self.initial_money}", "gold")
         print_colored(f"total_opening_orders: {self.total_opening_orders}", "#1da44f")
-        print_colored(f"total_loss: {self.total_loss}", "pink")
-        print_colored(f"total_profit: {self.total_profit}", "green")
-        print_colored(f"gross: {self.total_profit+self.total_loss}", "deeppink")
+        print_colored(f"total_loss: {round(self.total_loss, 2)}", "pink")
+        print_colored(f"total_profit: {round(self.total_profit, 2)}", "green")
+        print_colored(f"gross: {round(self.total_profit+self.total_loss, 2)}", "deeppink")
         print_colored(f"total_pending: {self.total_pending_money}", "grey")
-        print_colored(f"my free money: {self.current_money-self.total_pending_money}", "orange")
-        print_colored(f"my total money: {self.current_money}", "#d16984")
+        print_colored(f"my free money: {round(self.current_money-self.total_pending_money, 2)}", "orange")
+        print_colored(f"my total money: {round(self.current_money, 2)}", "#d16984")
         print_colored(f"profit_count: {self.profit_count}, loss_count: {self.loss_count}, pending_count: {self.pending_count}, missed_count: {len(self.missed_orders)}", "#a1309d")
 
         date = datetime.today().date()

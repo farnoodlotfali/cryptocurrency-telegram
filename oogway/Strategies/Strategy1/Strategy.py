@@ -98,16 +98,16 @@ class Strategy1(AbsStrategy):
             if is_fulltarget or (statusName == PostStatusValues.SUCCESS.value):
                 is_hit = True
 
-                profit = active_take_profit[active_tp_len-1].profit/100
+                profit = active_take_profit[active_tp_len-1].profit
                 date = int(active_take_profit[active_tp_len-1].date.timestamp()*1000)
-                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+profit))
+                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+(profit/100)))
                 self.addProfitOrder(order=pr, profit=profit, status_date=date, type= active_tp_len if statusName == PostStatusValues.SUCCESS.value else 1000)
 
             elif statusName in [PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.FAILED.value]:
                 is_hit = True
-                profit = pr.profit/100
+                profit = pr.profit
                 date = int(stoploss.date.timestamp()*1000)
-                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+profit))
+                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+(profit/100)))
                 self.addLossOrder(order=pr, profit=profit, status_date=date)
 
             # self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
@@ -124,8 +124,8 @@ class Strategy1(AbsStrategy):
             if showPrint:
 
                 if is_hit:
-                    print(f'profit: {round(profit,2)} %, money back: {round(positionSize*(1+profit), 2)}')
-                    print(f'current_money: {round(self.current_money+(positionSize*(1+profit)),2)}')
+                    print(f'profit: {round(profit,2)} %, money back: {round(positionSize*(1+profit/100), 2)}')
+                    print(f'current_money: {round(self.current_money+(positionSize*(1+profit/100)),2)}')
                 else:
                     print(f'take-profit or stoploss or entry target has not been reach completely, so pending')
                 

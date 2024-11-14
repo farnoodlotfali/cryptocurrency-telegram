@@ -18,10 +18,10 @@ from Shared.Constant import PostStatusValues, PositionSideValues
 def calStoploss(entry:float, leverage:int, isShort:bool, max_percent_stoploss:float):
     return entry*(1+(max_percent_stoploss/(100*leverage*(1 if isShort else -1)))) 
 
-class Strategy2(AbsStrategy):
-    strategy_name = 'strategy2'
+class Strategy4(AbsStrategy):
+    strategy_name = 'strategy4'
 
-    async def backtest_with_money_strategy_2(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, max_percent_stoploss: float=5):
+    async def backtest_with_money_strategy_4(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, max_percent_stoploss: float=5):
 
         if not (0.5 <= max_percent_stoploss <= 100):
             raise ValueError(f"max_percent_stoploss should be between 0.5 and 100, but got {max_percent_stoploss}")
@@ -83,6 +83,7 @@ class Strategy2(AbsStrategy):
                 profit = 0
             
                 stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, max_percent_stoploss)
+               
 
                 # add positionSize to pending money
                 self.total_pending_money += positionSize
@@ -162,11 +163,6 @@ class Strategy2(AbsStrategy):
                                 # calculate the amount of profit
                                 profit_value = findProfit(new_entry, tp, pr.leverage)
                                 
-                                profit += profit_value
-
-                                # set new entry
-                                new_entry = take_profit[tp_turn].value
-
                                 tps.append({
                                     'value': tp,
                                     'tohlcv': row
@@ -176,6 +172,7 @@ class Strategy2(AbsStrategy):
                                 if (tp_turn) == len(take_profit) or close_tp <= len(tps):
                                     self.pending_count -= 1
                                     self.profit_count += 1
+                                    profit += profit_value
 
                                     self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
                                     self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
@@ -183,13 +180,10 @@ class Strategy2(AbsStrategy):
                                     break
 
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
-                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit_value)
+                                self.addProfitOrder(order=pr, profit=profit_value, status_date=row[0], type=tp_turn)
                                 tp = take_profit[tp_turn].value
-                                if tp_turn == 1:
-                                    stop_loss = entry_price[0].value
-                                else:
-                                    stop_loss = take_profit[tp_turn-2].value
+                                
                 else:
                     for row in LData:
                         if row[0] < start_timestamp:
@@ -231,10 +225,6 @@ class Strategy2(AbsStrategy):
 
                                 profit_value = findProfit(new_entry, tp, pr.leverage)
 
-                                profit += profit_value
-                                
-                                new_entry = take_profit[tp_turn].value
-
                                 tps.append({
                                     'value': tp,
                                     'tohlcv': row
@@ -244,18 +234,15 @@ class Strategy2(AbsStrategy):
                                 if (tp_turn) == len(take_profit) or close_tp <= len(tps):
                                     self.pending_count -= 1
                                     self.profit_count += 1
+                                    profit += profit_value
                                     self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
                                     self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
                                     is_hit = True
                                     break
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
-                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit_value)
+                                self.addProfitOrder(order=pr, profit=profit_value, status_date=row[0], type=tp_turn)
                                 tp = take_profit[tp_turn].value
-                                if tp_turn == 1:
-                                    stop_loss = entry_price[0].value
-                                else:
-                                    stop_loss = take_profit[tp_turn-2].value
 
                 self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
 
