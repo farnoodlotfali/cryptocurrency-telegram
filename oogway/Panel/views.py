@@ -15,7 +15,7 @@ from PostAnalyzer.models import (
     PositionSide,
     StopLoss
 )
-from django.db.models import Count, Sum, Max, Case, When, IntegerField, FloatField
+from django.db.models import Count, Sum, Max, Case, When, IntegerField, FloatField, Value, CharField, F
 from Shared.Constant import PostStatusValues
 from django.db.models.functions import TruncMonth
 
@@ -329,6 +329,7 @@ def get_predicts_stat(request):
     tp_result_arrange_FAILED_WITH_PROFIT = findTpResult(tp_query_FAILED_WITH_PROFIT)
     # ********************************************************
     
+    
     return render(request, "Statistic/index.html", {"symbols": symbols,
                                                     "positions": positions,
                                                     "channels": channels,
@@ -358,8 +359,51 @@ def get_predicts_stat(request):
 # statistic of channels
 @login_required(login_url=LOGIN_PAGE_URL)
 def get_channels_stat(request):
+
+    channel_predict = Channel.objects.filter(post__predict__status__name__in=[PostStatusValues.FAILED.value, PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.SUCCESS.value, PostStatusValues.FULLTARGET.value]).annotate(status_group=Case(
+        When(post__predict__status__name__in=[PostStatusValues.FAILED.value, PostStatusValues.FAILED_WITH_PROFIT.value], then=Value('FAILED_GROUP')),
+        When(post__predict__status__name__in=[PostStatusValues.SUCCESS.value, PostStatusValues.FULLTARGET.value], then=Value('SUCCESS_GROUP')),
+        output_field=CharField(),
+    ),
+        predict_count=Count('post__predict', distinct=True),
+    ).values('channel_id', 'name', 'status_group', 'predict_count').order_by('channel_id', 'status_group')
+
+    channel_predict_total = Predict.objects.filter(post__channel__isnull=False).annotate(channel_id=F('post__channel__channel_id')).values('channel_id').annotate(total_count=Count('id'))
+        
+    channel_predict_result = {}
+
+    for entry in channel_predict:
+        channel_id = entry['channel_id']
+        if channel_id not in channel_predict_result:
+            channel_predict_result[channel_id] = {
+                'channel_id': channel_id,
+                'name': entry['name'], 
+                'FAILED_GROUP': 0,
+                'SUCCESS_GROUP': 0
+            }
+        
+        if entry['status_group'] == 'FAILED_GROUP':
+            channel_predict_result[channel_id]['FAILED_GROUP'] += entry['predict_count']
+        elif entry['status_group'] == 'SUCCESS_GROUP':
+            channel_predict_result[channel_id]['SUCCESS_GROUP'] += entry['predict_count']
+
+    for entry in channel_predict_total:
+        channel_id = entry['channel_id']
+        if channel_id in channel_predict_result:
+            channel_predict_result[channel_id]['total_count'] = entry['total_count']
+            channel_predict_result[channel_id]['win_rate'] = channel_predict_result[channel_id]['SUCCESS_GROUP']/entry['total_count']
+            channel_predict_result[channel_id]['loss_rate'] = channel_predict_result[channel_id]['FAILED_GROUP']/entry['total_count']
+
+    channel_predict_result_final = list(channel_predict_result.values())
+    print(channel_predict_result_final)
+
+    # ********************************************************
+
+
     return render(request, "Statistic/channel-stat.html", {'stat_per_month': channel_stat_per_month(request),
-                                                           'stat_total': channel_stat_total(request)})
+                                                           'stat_total': channel_stat_total(request),
+                                                            "channel_predict_result_final": channel_predict_result_final,
+                                                           })
 
 # total statistic of channels
 def channel_stat_total(request):
