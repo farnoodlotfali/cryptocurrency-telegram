@@ -92,7 +92,15 @@
                 <p>Channels</p>
               </a>
             </li>
+
+           
           </ul>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'Analyze:get_user_posts' %}" class="nav-link {% is_active 'Analyze:get_user_posts' %}">
+            <i class="nav-icon fa fa-assistive-listening-systems"></i>
+            <p>Listen Channels</p>
+          </a>
         </li>
       </ul>
     </nav>
