@@ -122,10 +122,14 @@ class StopLoss(models.Model):
         return f"{self.predict.id} {self.value}"
 
 class SettingConfig(models.Model):
+    # Allow channels set order 
     allow_channels_set_order = models.BooleanField(default=False, editable=True, null=True)
+    # A number that show how much USDT can use in open a position
     # how much USDT can use in open position
     max_entry_money = models.FloatField(default=5, editable=True, null=True)
+    # A number that times Profit or Loss <u>(Leverage Effect must be ON)
     max_leverage = models.PositiveBigIntegerField(default=1, editable=True, null=True)
+    # If True, leverage has Effect to a order. else Max leverage will be 1
     leverage_effect = models.BooleanField(default=False, editable=True, null=True)
     def __str__(self):
         return f"max_entry_money: {self.max_entry_money} - allow channels set order:{self.allow_channels_set_order}"

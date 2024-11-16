@@ -50,7 +50,13 @@ MAX_PROFIT_VALUE = 60
 
 
 # # for webPanel you can check SettingConfig model in PostAnalyzer\models.py
-# SettingConfigsVariables = {
-#     # a days that we must wait for finding status of order(signal) in statistics method (such as statistic_PredictParts )
-#     'max_day_wait': 10,
-# }
+SETTING_CONFIGS_VARIABLES = {
+    # Allow channels set order 
+    'allow_channels_set_order': True,
+    # A number that show how much USDT can use in open a position
+    'max_entry_money': 20,
+    # A number that times Profit or Loss <u>(Leverage Effect must be ON)
+    'max_leverage': 20,
+    # If True, leverage has Effect to a order. else Max leverage will be 1
+    'leverage_effect': True
+}
