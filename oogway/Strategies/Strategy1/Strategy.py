@@ -11,6 +11,7 @@ from PostAnalyzer.models import (
     Predict,
     TakeProfitTarget,
     StopLoss,
+    EntryTarget,
 )
 
 # ****************************************************************************************************************************
@@ -59,6 +60,10 @@ class Strategy1(AbsStrategy):
 
             active_take_profit = await sync_to_async(
                 lambda: list(TakeProfitTarget.objects.filter(predict=pr, active=True).order_by('index'))
+            )() 
+            
+            active_entry = await sync_to_async(
+                lambda: list(EntryTarget.objects.filter(predict=pr, active=True).order_by('index'))
             )()
 
             # get stoploss 
@@ -98,17 +103,26 @@ class Strategy1(AbsStrategy):
             if is_fulltarget or (statusName == PostStatusValues.SUCCESS.value):
                 is_hit = True
 
-                profit = active_take_profit[active_tp_len-1].profit
+                profit = active_take_profit[active_tp_len-1].profit/100
+                profit_money_value = positionSize * profit
+                money_back = positionSize + profit_money_value
+
                 date = int(active_take_profit[active_tp_len-1].date.timestamp()*1000)
-                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+(profit/100)))
-                self.addProfitOrder(order=pr, profit=profit, status_date=date, type= active_tp_len if statusName == PostStatusValues.SUCCESS.value else 1000)
+                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=money_back)
+                self.removeFromPending(order=pr)
+                self.addEntryOrder(order=pr, active_date=int(active_entry[0].date.timestamp()*1000))
+                self.addProfitOrder(order=pr, profit=profit, status_date=date, position_size=positionSize, money_back=money_back, type= active_tp_len if statusName == PostStatusValues.SUCCESS.value else 1000)
 
             elif statusName in [PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.FAILED.value]:
                 is_hit = True
-                profit = pr.profit
+                profit = pr.profit/100
+                profit_money_value = positionSize * profit
+                money_back = positionSize + profit_money_value
                 date = int(stoploss.date.timestamp()*1000)
-                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=positionSize*(1+(profit/100)))
-                self.addLossOrder(order=pr, profit=profit, status_date=date)
+                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=money_back)
+                self.removeFromPending(order=pr)
+                self.addEntryOrder(order=pr, active_date=int(active_entry[0].date.timestamp()*1000))
+                self.addLossOrder(order=pr, profit=profit, status_date=date, money_back=money_back, position_size=positionSize, type= -1 if len(active_entry) == 0 else len(active_entry))
 
             # self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
 
@@ -124,8 +138,8 @@ class Strategy1(AbsStrategy):
             if showPrint:
 
                 if is_hit:
-                    print(f'profit: {round(profit,2)} %, money back: {round(positionSize*(1+profit/100), 2)}')
-                    print(f'current_money: {round(self.current_money+(positionSize*(1+profit/100)),2)}')
+                    print(f'profit: {round(profit,2)}, money back: {round(positionSize*(1+profit), 2)}')
+                    print(f'current_money: {round(self.current_money+(positionSize*(1+profit)),2)}')
                 else:
                     print(f'take-profit or stoploss or entry target has not been reach completely, so pending')
                 

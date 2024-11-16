@@ -8,6 +8,7 @@ class PostStatusValues(Enum):
     CANCELED = 'CANCELED'
     PENDING = 'PENDING'
     ERROR = 'ERROR'
+    TREND_ERROR = 'TREND_ERROR'
     WAIT_MANY_DAYS = 'WAIT MANY DAYS'
     MISSED = 'MISSED'
 
@@ -19,6 +20,7 @@ class PostStatusTypeValues(Enum):
     CANCELED = [PostStatusValues.CANCELED.value,0]
     PENDING = [PostStatusValues.PENDING.value,0]
     ERROR = [PostStatusValues.ERROR.value,0]
+    TREND_ERROR = [PostStatusValues.TREND_ERROR.value,0]
     MISSED = [PostStatusValues.MISSED.value,0]
     WAIT_MANY_DAYS = [PostStatusValues.WAIT_MANY_DAYS.value,0]
 

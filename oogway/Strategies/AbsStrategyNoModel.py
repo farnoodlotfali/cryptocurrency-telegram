@@ -41,7 +41,12 @@ class AbsStrategyNoModel(ABC):
         # (PredictNoModel)
     ]    
     
-    # missing 
+    # trend_error 
+    trend_error_orders = [
+        # (PredictNoModel)
+    ]    
+    
+    # pending 
     pending_orders = [
         # (PredictNoModel)
     ]
@@ -65,6 +70,8 @@ class AbsStrategyNoModel(ABC):
         #     'active_date': 12345,
         #     'symbol': "",
         #     'profit': 0,
+        #     'position_size': 0,
+        #     'money_back': 0,
         #     'status': "",
         #     'status_date': 12345,
         #     'status_type': 0,
@@ -117,6 +124,8 @@ class AbsStrategyNoModel(ABC):
             'active_date': None,
             'symbol': order['symbol'],
             'profit': 0,
+            'money_back': 0,
+            'position_size': 0,
             'status': "PENDING",
             'status_date': None,
             'status_type': 0,
@@ -144,7 +153,27 @@ class AbsStrategyNoModel(ABC):
             'active_date': None,
             'symbol': order['symbol'],
             'profit': 0,
-            'status': "MISSED",
+            'money_back': 0,
+            'position_size': 0, 'status': "MISSED",
+            'status_date': None,
+            'status_type': 0,
+            'market': order['market'],
+            'position': order['position'],
+            'leverage': order['leverage'],
+            'id': order['id'],
+        })
+
+    # this method should add order to trend_error_orders and orders_status for TREND ERROR order
+    def addTrendErrorOrder(self, order:PredictNoModel):
+        self.trend_error_orders.append(order)
+        self.orders_status.append({
+            'date': order['date'],
+            'active_date': None,
+            'symbol': order['symbol'],
+            'profit': 0,
+            'money_back': 0,
+            'position_size': 0,
+            'status': "TREND ERROR",
             'status_date': None,
             'status_type': 0,
             'market': order['market'],
@@ -167,6 +196,8 @@ class AbsStrategyNoModel(ABC):
             'active_date': datetime.fromtimestamp(active_date).astimezone(self.time_zone_pytz),
             'symbol': order['symbol'],
             'profit': 0,
+            'money_back': 0,
+            'position_size': 0,
             'status': "ENTRY",
             'status_date': None,
             'status_type': 0,
@@ -177,7 +208,7 @@ class AbsStrategyNoModel(ABC):
         })
 
     # this method should update orders_status list for LOSS status
-    def addLossOrder(self, order:PredictNoModel, status_date:int, profit:float):
+    def addLossOrder(self, order:PredictNoModel, status_date:int, profit:float, position_size:float, money_back:float):
         """
             status_date is timestamp
         """
@@ -188,13 +219,15 @@ class AbsStrategyNoModel(ABC):
         for item in self.orders_status:
             if item['id'] == order['id']:
                 item['profit'] = profit
+                item['position_size'] = position_size
+                item['money_back'] = money_back
                 item['status_date'] = datetime.fromtimestamp(status_date).astimezone(self.time_zone_pytz)
                 item['status'] = "LOSS"
                 item['status_type'] = -1
                 break
         
     # this method should update orders_status list for PROFIT status
-    def addProfitOrder(self, order:PredictNoModel, status_date:int , profit:float, type:int):
+    def addProfitOrder(self, order:PredictNoModel, status_date:int , profit:float, position_size:float, money_back:float, type:int):
         """
             status_date is timestamp
         """
@@ -205,6 +238,8 @@ class AbsStrategyNoModel(ABC):
         for item in self.orders_status:
             if item['id'] == order['id']:
                 item['profit'] = profit
+                item['position_size'] = position_size
+                item['money_back'] = money_back
                 item['status_date'] = datetime.fromtimestamp(status_date).astimezone(self.time_zone_pytz)
                 item['status'] = "PROFIT"
                 item['status_type'] = type
@@ -272,14 +307,14 @@ class AbsStrategyNoModel(ABC):
     def report(self, name:str='sr10'):
         print_colored(f"initial money: {self.initial_money}", "gold")
         print_colored(f"total_opening_orders: {self.total_opening_orders}", "#1da44f")
-        print_colored(f"total_loss: {self.total_loss}", "pink")
-        print_colored(f"total_profit: {self.total_profit}", "green")
-        print_colored(f"gross: {self.total_profit+self.total_loss}", "deeppink")
+        print_colored(f"total_loss: {round(self.total_loss*100, 2)}%", "pink")
+        print_colored(f"total_profit: {round(self.total_profit*100, 2)}% ", "green")
+        print_colored(f"gross: {round((self.total_profit+self.total_loss )*100, 2)}%", "deeppink")
         print_colored(f"total_pending: {self.total_pending_money}", "grey")
-        print_colored(f"my free money: {self.current_money-self.total_pending_money}", "orange")
-        print_colored(f"my total money: {self.current_money}", "#d16984")
+        print_colored(f"my free money: {round(self.current_money-self.total_pending_money, 2)}", "orange")
+        print_colored(f"my total money: {round(self.current_money, 2)}", "#d16984")
         print_colored(f"profit_count: {self.profit_count}, loss_count: {self.loss_count}, pending_count: {self.pending_count}, missed_count: {len(self.missed_orders)}", "#a1309d")
-        
+
         date = datetime.today().date()
         hour = datetime.today().hour
         minute = datetime.today().minute

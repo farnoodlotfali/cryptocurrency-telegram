@@ -143,25 +143,29 @@ class Strategy4(AbsStrategy):
                                 self.pending_count -= 1
                                 self.loss_count += 1
                                 is_hit = True
-                                # calculate the amount of loss
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage)
-                            
+                                 # calculate the amount of loss
+                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
+
                                 stop_loss_reached = {
                                     'value': new_entry,
                                     'tohlcv': row
                                 }
                                 # update active_orders (end_date, money_back)
-                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
+                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
 
                                 # update orders_status. LOSS order :(
-                                self.addLossOrder(order=pr, profit=profit, status_date=row[0])
+                                self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
                                 break
 
                             if float(row[2]) >= tp: 
                                 # wait_for_entry = True
 
                                 # calculate the amount of profit
-                                profit_value = findProfit(new_entry, tp, pr.leverage)
+                                profit = findProfit(new_entry, tp, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
                                 
                                 tps.append({
                                     'value': tp,
@@ -172,16 +176,15 @@ class Strategy4(AbsStrategy):
                                 if (tp_turn) == len(take_profit) or close_tp <= len(tps):
                                     self.pending_count -= 1
                                     self.profit_count += 1
-                                    profit += profit_value
 
-                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
+                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0],position_size=positionSize, money_back=money_back, type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
                                     is_hit = True
                                     break
 
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit_value)
-                                self.addProfitOrder(order=pr, profit=profit_value, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=money_back)
+                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn, position_size=positionSize,money_back=money_back)
                                 tp = take_profit[tp_turn].value
                                 
                 else:
@@ -208,7 +211,10 @@ class Strategy4(AbsStrategy):
                                 self.pending_count -= 1
                                 self.loss_count += 1
 
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage) 
+                                # calculate the amount of loss
+                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
 
                                 is_hit = True
                                 stop_loss_reached = {
@@ -216,14 +222,16 @@ class Strategy4(AbsStrategy):
                                     'tohlcv': row
                                 }
 
-                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                self.addLossOrder(order=pr, profit=profit, status_date=row[0])
+                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
                                 break
 
                             if float(row[3]) <= tp:
                                 # wait_for_entry = True
 
-                                profit_value = findProfit(new_entry, tp, pr.leverage)
+                                profit = findProfit(new_entry, tp, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
 
                                 tps.append({
                                     'value': tp,
@@ -234,14 +242,13 @@ class Strategy4(AbsStrategy):
                                 if (tp_turn) == len(take_profit) or close_tp <= len(tps):
                                     self.pending_count -= 1
                                     self.profit_count += 1
-                                    profit += profit_value
-                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
+                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
                                     is_hit = True
                                     break
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit_value)
-                                self.addProfitOrder(order=pr, profit=profit_value, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=money_back)
+                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn, position_size=positionSize, money_back=money_back)
                                 tp = take_profit[tp_turn].value
 
                 self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
@@ -255,8 +262,8 @@ class Strategy4(AbsStrategy):
                 if showPrint:
 
                     if is_hit:
-                        print(f'profit: {round(profit,2)}, money back: {round(profit+positionSize, 2)}')
-                        print(f'current_money: {round(self.current_money+profit+positionSize,2)}')
+                        print(f'profit: {round(profit,2)}, money back: {round(positionSize*(profit+1), 2)}')
+                        print(f'current_money: {round(self.current_money+(positionSize*(profit+1)),2)}')
                     else:
                         print(f'take-profit or stoploss or entry target has not been reach completely, so pending')
                     

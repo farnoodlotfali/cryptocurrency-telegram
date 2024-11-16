@@ -12,19 +12,18 @@ from PostAnalyzer.models import (
     StopLoss,
 )
 from Shared.updateOHLC_FromAPI import updateOHLC_FromAPI
-from Shared.Constant import PostStatusValues, PositionSideValues
+from Shared.Constant import PostStatusValues, PositionSideValues, TrendValues
+from Shared.trend import check_trend_in_one_week_BTC
 # ****************************************************************************************************************************
 
 def calStoploss(entry:float, leverage:int, isShort:bool, max_percent_stoploss:float):
     return entry*(1+(max_percent_stoploss/(100*leverage*(1 if isShort else -1)))) 
 
-class Strategy3(AbsStrategy):
-    strategy_name = 'strategy3'
+class Strategy11(AbsStrategy):
+    strategy_name = 'strategy11'
 
-    async def backtest_with_money_strategy_3(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, max_percent_stoploss: float=5, effect_stoploss:bool=True):
+    async def backtest_with_money_strategy_11(self, predicts: list[Predict], close_tp:int=1, showPrint: bool= False, positionSize: float= 100, trendPeriod:int= 50):
 
-        if not (0.5 <= max_percent_stoploss <= 100):
-            raise ValueError(f"max_percent_stoploss should be between 0.5 and 100, but got {max_percent_stoploss}")
         
         for i, pr in enumerate(predicts):
             try:
@@ -50,6 +49,19 @@ class Strategy3(AbsStrategy):
 
                     self.addMissOrder(order=pr)
                     
+                    continue   
+
+
+                # find trend
+                trend = await check_trend_in_one_week_BTC(start_timestamp, trendPeriod)
+                isSHORT = pr.position.name == PositionSideValues.SHORT.value
+                # trend order :(
+                if (isSHORT and trend == TrendValues.UPTREND.value) or (not isSHORT and trend == TrendValues.DOWNTREND.value):
+                    if showPrint:
+                        print(pr.symbol.name, 'trend order\n')
+
+                    self.addTrendErrorOrder(order=pr)
+                    
                     continue 
 
                 # get entries 
@@ -68,7 +80,8 @@ class Strategy3(AbsStrategy):
                 # load data from JSON file
                 await updateOHLC_FromAPI(start_timestamp, pr.symbol.name, pr.market.name)
                 LData = load_historic_tohlcv_json(pr.symbol.name, pr.market.name)
-                isSHORT = pr.position.name == PositionSideValues.SHORT.value
+
+             
 
                 tp_turn = 0
                 tp = take_profit[tp_turn].value
@@ -82,10 +95,8 @@ class Strategy3(AbsStrategy):
                 start_timestamp = int(pr.date.timestamp() * 1000)
                 profit = 0
             
-                if effect_stoploss:
-                    stop_loss = calStoploss(new_entry, pr.leverage, isSHORT, max_percent_stoploss)
-                else:
-                    stop_loss = stoploss.value
+               
+                stop_loss = stoploss.value
 
                 # add positionSize to pending money
                 self.total_pending_money += positionSize
@@ -145,10 +156,12 @@ class Strategy3(AbsStrategy):
                                 self.pending_count -= 1
                                 self.loss_count += 1
                                 is_hit = True
-                                # calculate the amount of loss
+                               # calculate the amount of loss
                                 profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                print(profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
+                                print(money_back) 
 
                                 stop_loss_reached = {
                                     'value': new_entry,
@@ -159,16 +172,17 @@ class Strategy3(AbsStrategy):
 
                                 # update orders_status. LOSS order :(
                                 self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
-
                                 break
 
                             if float(row[2]) >= tp: 
                                 # wait_for_entry = True
 
                                 # calculate the amount of profit
-                                profit += findProfit(new_entry, tp, pr.leverage, False) 
+                                profit += findProfit(new_entry, tp, pr.leverage, False)
+                                print(profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
+                                print(money_back) 
 
                                 # set new entry
                                 new_entry = take_profit[tp_turn].value
@@ -219,8 +233,10 @@ class Strategy3(AbsStrategy):
 
                                 # calculate the amount of loss
                                 profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                print(new_entry, profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
+                                print(money_back) 
 
                                 is_hit = True
                                 stop_loss_reached = {
@@ -232,13 +248,15 @@ class Strategy3(AbsStrategy):
                                 self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
                                 break
 
-
                             if float(row[3]) <= tp:
                                 # wait_for_entry = True
 
                                 profit += findProfit(new_entry, tp, pr.leverage, False) 
+                                print(new_entry,tp, profit) 
+
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
+                                print(money_back) 
                                 
                                 new_entry = take_profit[tp_turn].value
 

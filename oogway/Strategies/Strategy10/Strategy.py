@@ -143,8 +143,10 @@ class Strategy10(AbsStrategy):
                                 is_hit = True
 
                                 # calculate the amount of loss
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage)
-                            
+                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
+
                                 # add stop loss
                                 stop_loss_reached = {
                                     'value': new_entry,
@@ -152,17 +154,17 @@ class Strategy10(AbsStrategy):
                                 }
                                 
                                 # update active_orders (end_date, money_back)
-                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
+                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
 
                                 # update orders_status. LOSS order :(
-                                self.addLossOrder(order=pr, profit=profit, status_date=row[0])
+                                self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
                                 break
 
                             if float(row[2]) >= tp: 
                                 # calculate the amount of profit
-                                profit_value = findProfit(new_entry, tp, pr.leverage)
-
-                                profit += profit_value
+                                profit += findProfit(new_entry, tp, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
                                 
                                 # set new entry
                                 new_entry = take_profit[tp_turn].value
@@ -177,13 +179,13 @@ class Strategy10(AbsStrategy):
                                     self.pending_count -= 1
                                     self.profit_count += 1
 
-                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
+                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0],position_size=positionSize, money_back=money_back, type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
                                     is_hit = True
                                     break
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
-                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=money_back)
+                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn, position_size=positionSize,money_back=money_back)
                                 tp = take_profit[tp_turn].value
                                 stop_loss = round(((stop_loss_percent*new_entry)/pr.leverage)+new_entry, 5) 
 
@@ -212,23 +214,26 @@ class Strategy10(AbsStrategy):
                                 self.pending_count -= 1
                                 self.loss_count += 1
 
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage) 
+                                # calculate the amount of loss
+                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
 
                                 is_hit = True
                                 stop_loss_reached = {
                                     'value': new_entry,
                                     'tohlcv': row
                                 }
-                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                self.addLossOrder(order=pr, profit=profit, status_date=row[0])
+                                self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                self.addLossOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= -1 if len(tps) == 0 else len(tps))
                                 break
 
                             if float(row[3]) <= tp:
                                 # wait_for_entry = True
 
-                                profit_value = findProfit(new_entry, tp, pr.leverage)
-
-                                profit += profit_value
+                                profit += findProfit(new_entry, tp, pr.leverage, False) 
+                                profit_money_value = positionSize * profit
+                                money_back = positionSize + profit_money_value
                                 
                                 new_entry = take_profit[tp_turn].value
 
@@ -241,13 +246,13 @@ class Strategy10(AbsStrategy):
                                 if (tp_turn) == len(take_profit) or close_tp <= len(tps):
                                     self.pending_count -= 1
                                     self.profit_count += 1
-                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=positionSize+profit)
-                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
+                                    self.updateMoneyManagement(id=pr.id, end_date=row[0], money_back=money_back)
+                                    self.addProfitOrder(order=pr, profit=profit, status_date=row[0], position_size=positionSize, money_back=money_back, type= 1000 if (tp_turn) == len(take_profit) else tp_turn)
                                     is_hit = True
                                     break
 
-                                self.updateMoneyManagement(id=pr.id, money_back=positionSize+profit)
-                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn)
+                                self.updateMoneyManagement(id=pr.id, money_back=money_back)
+                                self.addProfitOrder(order=pr, profit=profit, status_date=row[0], type=tp_turn, position_size=positionSize, money_back=money_back)
 
                                 tp = take_profit[tp_turn].value
                                 stop_loss = round((((stop_loss_percent*new_entry)/pr.leverage) * -1)+new_entry, 5) 
@@ -263,8 +268,8 @@ class Strategy10(AbsStrategy):
                 if showPrint:
 
                     if is_hit:
-                        print(f'profit: {round(profit,2)}, money back: {round(profit+positionSize, 2)}')
-                        print(f'current_money: {round(self.current_money+profit+positionSize,2)}')
+                        print(f'profit: {round(profit,2)}, money back: {round(positionSize*(profit+1), 2)}')
+                        print(f'current_money: {round(self.current_money+(positionSize*(profit+1)),2)}')
                     else:
                         print(f'take-profit or stoploss or entry target has not been reach completely, so pending')
                     
