@@ -158,10 +158,8 @@ class Strategy11(AbsStrategy):
                                 is_hit = True
                                # calculate the amount of loss
                                 profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
-                                print(profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
-                                print(money_back) 
 
                                 stop_loss_reached = {
                                     'value': new_entry,
@@ -179,10 +177,8 @@ class Strategy11(AbsStrategy):
 
                                 # calculate the amount of profit
                                 profit += findProfit(new_entry, tp, pr.leverage, False)
-                                print(profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
-                                print(money_back) 
 
                                 # set new entry
                                 new_entry = take_profit[tp_turn].value
@@ -233,10 +229,8 @@ class Strategy11(AbsStrategy):
 
                                 # calculate the amount of loss
                                 profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
-                                print(new_entry, profit) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
-                                print(money_back) 
 
                                 is_hit = True
                                 stop_loss_reached = {
@@ -252,11 +246,9 @@ class Strategy11(AbsStrategy):
                                 # wait_for_entry = True
 
                                 profit += findProfit(new_entry, tp, pr.leverage, False) 
-                                print(new_entry,tp, profit) 
 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
-                                print(money_back) 
                                 
                                 new_entry = take_profit[tp_turn].value
 
