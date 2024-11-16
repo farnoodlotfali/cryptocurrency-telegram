@@ -1,4 +1,4 @@
-# Strategy 11
+# Strategy 12
 
 This strategy is a real-time strategy.
 This strategy actually does the same strategy as the channel itself.
@@ -21,7 +21,11 @@ positionSize = is a mount of money for opening a order. default = 100
 
 trendPeriod = is a number for finding Trend value(UPTREND,DOWNTREND,SIDEWAYS), using in MA (moving average). default = 50
 
+risk_percent = is a number between 0.05 and 1, for risking in position size. default = 1(means risk all money)
+
 ## How it works
+This strategy is like strategy12, but it has risk_percent parameter and we accept the risk of the order randomly.
+
 For every prediction, we will find the status using TOHLCV data and calculate the money that the predict should give back('money_back'), and also the end time for that predict('end_date').
 
 At first, we check all previous prediction\`s end time('end_date') according to current prediction\`s start time('start_timestamp'), if the start time is longer than the end time, we remove those predictions from the active orders list('active_orders') and the money from them is add to the current money.Then, we check the current money, if the current money is less than the positionSize, the prediction`s status is MISSED, adding to the missed orders and orders status list.
@@ -30,9 +34,14 @@ Second, we find position, then trend:
 
 `isSHORT = pr.position.name == PositionSideValues.SHORT.value`
 
-` if (isSHORT and trend == TrendValues.UPTREND.value) or (not isSHORT and trend == TrendValues.DOWNTREND.value)`
+`if (isSHORT and trend == TrendValues.UPTREND.value) or (not isSHORT and trend == TrendValues.DOWNTREND.value):`\
+    `accept = bool(random.getrandbits(1))`\
+   ` if accept:`\
+       ` positionSize = positionSize*risk_percent`\
+    `else:`\
+        `trend order`\
 
-if condition true, the order is a <mark>trend order</mark>
+if the condition is true and accept is false, the order is a <mark>trend order</mark>
 
 By passing the above conditions, we decrease current money by positionSize amount. we change the stoploss value according to "max_percent_stoploss" and first entry and predict position(LONG, SHORT).The prediction is added to the active orders and pending orders.
 
