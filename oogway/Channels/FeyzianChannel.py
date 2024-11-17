@@ -233,7 +233,6 @@ class FeyzianChannel(AbsChannel):
             "position": position_value,
             "market": market_value,
             "leverage": leverage_value,
-            "stopLoss": stopLoss_value,
             "margin_mode": marginMode_value,
             "profit": 0,
             "status": status_value, 
@@ -243,6 +242,7 @@ class FeyzianChannel(AbsChannel):
 
         newPredict = Predict(**PredictData)
         await newPredict.asave()
+        first_entry_value = entry_targets_value[0]
         
         stoploss = StopLoss(
             **{
@@ -257,11 +257,9 @@ class FeyzianChannel(AbsChannel):
 
 
         # set entry value objects to DB
-        first_entry_value = None
         if entry_targets_value:
             for i, value in enumerate(entry_targets_value):
-                if i == 0:
-                    first_entry_value = value
+                
                 entryData = EntryTarget(
                     **{
                         "predict": newPredict,
