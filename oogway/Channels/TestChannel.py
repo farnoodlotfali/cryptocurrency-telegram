@@ -30,109 +30,145 @@ from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValu
 
 _config = dotenv_values(".env")
 # abs ==> abstract
-class AliBeyroChannel(AbsChannel):
-    _channel_id = _config["CHANNEL_ALI_BEY"]
-    max_day_wait:int = 10
-    max_profit_percent:float = 300
+class TestChannel(AbsChannel):
+    _channel_id = _config["CHANNEL_TEST"]
 
     # abs
     def isPredictMsg(self, msg)->bool:
         patterns = [
-            r"📌 #(.+)",
-            r"Entry:(.+)",
-            r"Leverage:(.+)",
-            r"Stop : (.+)",
-            r"TP:(.+)",
+            r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
+            r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
+            r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
+            r"Market:\s*([A-Z]+)",
+            r"(StopLoss|Description):\s*([\d.]|\w+)",
         ]
 
         # Check if all patterns have a value
-        return all(re.search(pattern, msg) for pattern in patterns)
-
+        return all(re.search(pattern, msg, re.IGNORECASE) for pattern in patterns)
 
     # abs
-    async def findSymbol(self, msg, market)-> Optional[Symbol]:    
-        symbol = re.search(r"📌 #(.+)?USDT", msg, re.IGNORECASE)
-    
+    async def findSymbol(self, msg, market)-> Optional[Symbol]:
+        symbol = re.search(r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT", msg, re.IGNORECASE)
+        
         try:
             return await Symbol.objects.aget(base=returnSearchValue(symbol).upper(), market=market)
         except:
             return None
         
-
     # abs
     async def findMarket(self, msg)-> Optional[Market]:
-        market = None
-        if "Futures Call".lower() in msg.lower():
-            market = MarketValues.FUTURES.value
-        elif "Spot".lower() in msg.lower():
-            market = MarketValues.SPOT.value
+        market_match = re.search(r"Market:\s*([A-Z]+)", msg, re.IGNORECASE)
         
         try:
-            return await Market.objects.aget(name=market.upper())
+            market_value = await Market.objects.aget(name=returnSearchValue(market_match).upper())
+            return market_value
         except:
             return None
-        
+
     # abs
     async def findPosition(self, msg)-> Optional[PositionSide]:
-        if "short" in msg.lower():
-            pos = PositionSideValues.SHORT.value
-        elif "long" in msg.lower():
-            pos = PositionSideValues.LONG.value
-
+        position_match = re.search(r"Position:\s*([A-Z]+)", msg)
+        
         try:
-            return await PositionSide.objects.aget(name=pos)
+            position_value = await PositionSide.objects.aget(name=returnSearchValue(position_match).upper())
+            return position_value
         except:
             return None
-
+    
     # abs
     async def findLeverageAndMarginMode(self, msg)-> tuple[Optional[MarginMode], Optional[int]]:
-        leverage_match = re.search(r"Leverage:\s*(\d+x)", msg, re.IGNORECASE)
+        leverage_match = re.search(r"Leverage:\s*(Isolated|Cross)\s*(\d+x)", msg, re.IGNORECASE)
         if leverage_match:
-            leverage_value = int(leverage_match.group(1).lower().replace("x","")) 
+            margin_mode = await MarginMode.objects.aget(name=returnSearchValue(leverage_match).upper())
+            leverage_value = int(leverage_match.group(2).lower().replace("x",""))    
         else:
+            margin_mode = None
             leverage_value = None
-
-        leverage_type = await MarginMode.objects.aget(name=MarginModeValues.ISOLATED.value) 
         
-        
-        return leverage_type, leverage_value
+        return margin_mode, leverage_value
     
-
     # abs
     def findStopLoss(self, msg)-> Optional[float]:
         msg = msg.replace(",","")
-        msg = msg.replace("‌","")
-        
-        return float(returnSearchValue(re.search(r"Stop\s*:\s*(?:کلوز)?\s*([\d.]+)", msg)))
-    
+        stoploss = returnSearchValue(re.search(r"StopLoss:\s*([\d.]+)", msg))
+
+        return float(stoploss if stoploss else 'inf')
 
     # abs
     def findEntryTargets(self, msg)-> Optional[list[float]]:
-        entry_targets_match = re.search(r"Entry:(.+?)\n\n", msg, re.DOTALL)
-        entry_values = (
-            re.findall(r"\d+(?:\.\d+)?", entry_targets_match.group(1))
-            if entry_targets_match
-            else None
-        )
-        return [float(x.strip()) for x in entry_values]
-
-
+        msg = msg.replace(",","")
+        match = re.search(r"Entry Targets:([\s\S]+?)Take-Profit", msg, re.IGNORECASE)
+        match1 = re.search(r"Entry Price:([\s\S]+?)Take-Profit", msg, re.IGNORECASE)
+        final = match if match else match1
+        if final:
+            extracted_data = returnSearchValue(final)
+            return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data))  if i % 2 == 1]
+    
     # abs
     def findTakeProfits(self, msg)-> Optional[list[float]]:
-        take_profit_targets_match = re.search(r"TP:(.+?)\n\n", msg, re.DOTALL)
-        profit_values = (
-            re.findall(r"\d+(?:\.\d+)?", take_profit_targets_match.group(1))
-            if take_profit_targets_match
-            else None
-        )
-        return [float(x.strip()) for x in profit_values]
-   
-   
+        msg = msg.replace(",","")
+        match = re.search(r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)", msg, re.IGNORECASE)
+        if match:
+            extracted_data = returnSearchValue(match)
+            return [float(x.strip()) for i, x in enumerate(re.findall(r"(\d+\.\d+|\d+)", extracted_data)) if i % 2 == 1]
+            
     # abs
     async def isCancel(self, post:Post)-> bool:
-        pass
+        if post is None or post.reply_to_msg_id is None:
+            return False
+        
+        try:
+            manually_cancel_patterns = [
+                r"Cancelled",
+                r"Manually",
+            ]  
+            cancel_pattern =[
+                r"کنسل"
+            ]
 
+            # check = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_before_patterns)
+            check1 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in manually_cancel_patterns)
+            check2 = all(re.search(pattern, post.message, re.IGNORECASE) for pattern in cancel_pattern)
+         
+            if check1 or check2:
+                
+                predict = await Predict.objects.aget(post__message_id=post.reply_to_msg_id)
+                
+                status_value = await PostStatus.objects.aget(name=PostStatusValues.CANCELED.value)
+            
+                predict.status = status_value
+                predict.profit = 0
+            
+                await predict.asave()
+                await EntryTarget.objects.filter(predict=predict).aupdate(active=False, date=None, period=None)
+                await TakeProfitTarget.objects.filter(predict=predict).aupdate(active=False, date=None, period=None)
+                await StopLoss.objects.filter(predict=predict).aupdate(date=None, period=None)
+                return True
+                
+            else:
+                return False
+            
+        except:
+            # error_msg.append(model_to_dict(post))
+            return False
 
+    # cancel order in exchange
+    async def cancelOrderEx(self, post:Post)-> bool:
+        if post is None or post.reply_to_msg_id is None:
+            return False
+        
+        try:
+            predict = await Predict.objects.select_related('symbol', 'market').aget(post__message_id=post.reply_to_msg_id)
+            res = exchange.cancel_order(symbol=predict.symbol.name, id=predict.order_id)
+            print(res)
+        
+            return True
+                
+        except Exception as e:
+            # print( e)
+            super().handleError(post, f"error in cancelOrderEx method, {str(e)}", post.channel.name)
+         
+            return False
 
 
     # ****************************************************************************************************************************
@@ -143,182 +179,183 @@ class AliBeyroChannel(AbsChannel):
         if string is None or post is None:
             return None
         
-        try:
-            settings = await SettingConfig.objects.aget(id=1)
+    # try:
+        settings = await SettingConfig.objects.aget(id=1)
+    
+        # market
+        market_value= await self.findMarket(string)
+        isSpot = market_value.name == MarketValues.SPOT.value
+
+        # symbol
+        symbol_value = await self.findSymbol(string, market_value)
+
+        # position, leverage, marginMode
+        position_value = None
+        leverage_value = None
+        marginMode_value = None
+        if not isSpot:
+            position_value = await self.findPosition(string)
+            marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
+        else:
+            position_value= await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
         
-            # market
-            market_value= await self.findMarket(string)
-            isSpot = market_value.name == MarketValues.SPOT.value
+        # stopLoss
+        stopLoss_value = self.findStopLoss(string)
 
-            # symbol
-            symbol_value = await self.findSymbol(string, market_value)
+        # entry targets
+        entry_targets_value = self.findEntryTargets(string)
 
-            # position, leverage, marginMode
-            position_value = None
-            leverage_value = None
-            marginMode_value = None
-            if not isSpot:
-                position_value = await self.findPosition(string)
-                marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
-            else:
-                position_value= await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
-            
-            # stopLoss
-            stopLoss_value = self.findStopLoss(string)
+        # status    
+        status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
 
-            # entry targets
-            entry_targets_value = self.findEntryTargets(string)
+        # take_profit targets
+        take_profit_targets_value = self.findTakeProfits(string)
 
-            # status    
-            status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
+        # return Error RR < 0.2
+        # TODO will add to setting, to get min RR
+        # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
+        
+        # if RR < 0.2 or RR > 4:
+        #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
 
-            # take_profit targets
-            take_profit_targets_value = self.findTakeProfits(string)
+        # TODO check post.channel.id
+        # return false if signal already exists
+        # is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
+        #                             take_profit_targets_value,entry_targets_value,post.channel.id)
+        # if is_same_signal:
+        #     return False
 
-            # return Error RR < 0.2
-            # TODO will add to setting, to get min RR
-            # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
-            
-            # if RR < 0.2 or RR > 4:
-            #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
+        # set predict object to DB
+        PredictData = {
+            "post": post,
+            "date": post.date,
+            "symbol": symbol_value,
+            "position": position_value,
+            "market": market_value,
+            "leverage": leverage_value,
+            "stopLoss": stopLoss_value,
+            "margin_mode": marginMode_value,
+            "profit": 0,
+            "status": status_value, 
+            "order_id": None,
+        }
 
-            # TODO check post.channel.id
-            # return false if signal already exists
-            # is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
-            #                             take_profit_targets_value,entry_targets_value,post.channel.id)
-            # if is_same_signal:
-            #     return False
 
-            # set predict object to DB
-            PredictData = {
-                "post": post,
-                "date": post.date,
-                "symbol": symbol_value,
-                "position": position_value,
-                "market": market_value,
-                "leverage": leverage_value,
-                "stopLoss": stopLoss_value,
-                "margin_mode": marginMode_value,
-                "profit": 0,
-                "status": status_value, 
-                "order_id": None,
+        newPredict = Predict(**PredictData)
+        await newPredict.asave()
+        
+        stoploss = StopLoss(
+            **{
+                "predict": newPredict,
+                "value": stopLoss_value,
+                "period": None,
+                "date": None,
+                "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
             }
+        )
+        await stoploss.asave()
 
 
-            newPredict = Predict(**PredictData)
-            await newPredict.asave()
-
-            stoploss = StopLoss(
-                **{
-                    "predict": newPredict,
-                    "value": stopLoss_value,
-                    "period": None,
-                    "date": None,
-                    "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
-                }
-            )
-            await stoploss.asave()
-
-
-            # set entry value objects to DB
-            first_entry_value = None
-            if entry_targets_value:
-                for i, value in enumerate(entry_targets_value):
-                    if i == 0:
-                        first_entry_value = value
-                    entryData = EntryTarget(
-                        **{
-                            "predict": newPredict,
-                            "index": i,
-                            "value": value,
-                            "active": False,
-                            "period": None,
-                            "date": None,
-                        }
-                    )
-                    await entryData.asave()
-            
-            # set tp value objects to DB
-            first_tp_value = None
-            if take_profit_targets_value:
-                for i, value in enumerate(take_profit_targets_value):
-                    if i == 0:
-                        first_tp_value = value
-
-                    takeProfitData = TakeProfitTarget(
-                        **{
-                            "predict": newPredict,
-                            "index": i,
-                            "value": value,
-                            "active": False,
-                            "period": None,
-                            "profit": findProfit(first_entry_value, value, leverage_value),
-                            "date": None,
-                        }
-                    )
-                    await takeProfitData.asave()
-
-            # create order in exchange
-            if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
-                max_entry_money = settings.max_entry_money
-                leverage_effect = settings.leverage_effect
-
-                leverage_number = leverage_value if leverage_effect else 1
-                position = position_value.name
-                symbol = symbol_value.name
-
-                # set Margin Mode for a Pair in exchange
-                exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
-
-                # set Leverage for a Pair in exchange
-                exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
-                    'side': position
-                })
-
-                size_volume = max_entry_money / float(first_entry_value)
-                
-                # set order in exchange
-                print(first_entry_value, size_volume, "tp: ",first_tp_value,"sl: ", stopLoss_value, position)
-                order_data = exchange.create_order(
-                    symbol=symbol,
-                    type='limit',
-                    side='buy',
-                    amount=size_volume,
-                    price=first_entry_value,
-                    params={
-                        'positionSide': position,
-                        'takeProfit': {
-                            "type": "TAKE_PROFIT_MARKET",
-                            "quantity": size_volume,
-                            "stopPrice": first_tp_value,
-                            "price": first_tp_value,
-                            "workingType": "MARK_PRICE"
-                        },
-                        'stopLoss': {
-                            "type": "TAKE_PROFIT_MARKET",
-                            "quantity": size_volume,
-                            "stopPrice": stopLoss_value,
-                            "price": stopLoss_value,
-                            "workingType": "MARK_PRICE"
-                        }
+        # set entry value objects to DB
+        first_entry_value = None
+        if entry_targets_value:
+            for i, value in enumerate(entry_targets_value):
+                if i == 0:
+                    first_entry_value = value
+                entryData = EntryTarget(
+                    **{
+                        "predict": newPredict,
+                        "index": i,
+                        "value": value,
+                        "active": False,
+                        "period": None,
+                        "date": None,
                     }
                 )
-                print(order_data)
+                await entryData.asave()
+        
+        # set tp value objects to DB
+        first_tp_value = None
+        if take_profit_targets_value:
+            for i, value in enumerate(take_profit_targets_value):
+                if i == 0:
+                    first_tp_value = value
 
-                
+                takeProfitData = TakeProfitTarget(
+                    **{
+                        "predict": newPredict,
+                        "index": i,
+                        "value": value,
+                        "active": False,
+                        "period": None,
+                        "profit": findProfit(first_entry_value, value, leverage_value),
+                        "date": None,
+                    }
+                )
+                await takeProfitData.asave()
 
-                # save orderId in DB
-                newPredict.order_id = order_data['info']['orderId']
-                await newPredict.asave()
+        # create order in exchange
+        if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
+            max_entry_money = settings.max_entry_money
+            leverage_effect = settings.leverage_effect
 
-            return newPredict
-        except:
+            leverage_number = leverage_value if leverage_effect else 1
+            position = position_value.name
+            symbol = symbol_value.name
+
+            # set Margin Mode for a Pair in exchange
+            exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
+
+            # set Leverage for a Pair in exchange
+            exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
+                'side': position
+            })
+
+            size_volume = max_entry_money / float(first_entry_value)
             
-            # error_msg.append(model_to_dict(post))
-            return None
+            # set order in exchange
+            print(first_entry_value, size_volume, "tp: ",first_tp_value,"sl: ", stopLoss_value, position)
+            order_data = exchange.create_order(
+                symbol=symbol,
+                type='limit',
+                side='buy',
+                amount=size_volume,
+                price=first_entry_value,
+                params={
+                    'positionSide': position,
+                    'takeProfit': {
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": size_volume,
+                        "stopPrice": first_tp_value,
+                        "price": first_tp_value,
+                        "workingType": "MARK_PRICE"
+                    },
+                    'stopLoss': {
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": size_volume,
+                        "stopPrice": stopLoss_value,
+                        "price": stopLoss_value,
+                        "workingType": "MARK_PRICE"
+                    }
+                }
+            )
+            print(order_data)
+
+            
+            # save orderId in DB
+            newPredict.order_id = order_data['info']['orderId']
+            await newPredict.asave()
+
+        
+        return newPredict
+    # except:
+        
+    #     # error_msg.append(model_to_dict(post))
+    #     return None
 
     #abs
     async def extractDataFromMessage(self, message):
+        
         if isinstance(message, Message):
             is_predict_msg = self.isPredictMsg(message.message)
             channel = await Channel.objects.aget(channel_id=message.peer_id.channel_id)
@@ -341,13 +378,13 @@ class AliBeyroChannel(AbsChannel):
                 await self.predictParts(message.message, post)
             # cancel msg
             elif await self.isCancel(post):
-                pass
+                await self.cancelOrderEx(post)
+                
                 
             return PostData
         else:
             return None 
-
-
+        
 
     # ****************************************************************************************************************************
     # ******************************************** statistics methods ************************************************************
@@ -439,7 +476,7 @@ class AliBeyroChannel(AbsChannel):
 
             elif stat['stop_loss_reached']:
                 if tps_length > 0:
-                    status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED_WITH_PROFIT.value, type= tps_length if tps_length < 9 else 8)
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED_WITH_PROFIT.value, type=tps_length)
                 else:
                     status_value = await PostStatus.objects.aget(name=PostStatusValues.FAILED.value)
                 profit_value = findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1) 
@@ -450,7 +487,7 @@ class AliBeyroChannel(AbsChannel):
                     profit_value = findProfit(first_entry_value, take_profit_targets_value[tps_length-1], leverage_value) 
 
                 elif tps_length > 0:
-                    status_value = await PostStatus.objects.aget(name=PostStatusValues.SUCCESS.value, type=tps_length if tps_length < 9 else 8)
+                    status_value = await PostStatus.objects.aget(name=PostStatusValues.SUCCESS.value, type=tps_length)
                     profit_value = findProfit(first_entry_value, take_profit_targets_value[tps_length-1], leverage_value) 
                 
 
@@ -539,6 +576,7 @@ class AliBeyroChannel(AbsChannel):
                     await takeProfitData.asave()
 
 
+            
             return newPredict
         except Exception as e:
             super().handleError(post, f"error in statisticPredictParts method {str(e)}", post.channel.name)
@@ -591,18 +629,3 @@ class AliBeyroChannel(AbsChannel):
             return None
 
   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,9 +1,7 @@
 from dotenv import dotenv_values
 from telethon.sync import TelegramClient, events
 from telethon.tl.types import PeerChannel
-from Channels.FeyzianChannel import FeyzianChannel
-from Channels.AliBeyroChannel import AliBeyroChannel
-from Channels.RastadChannel import RastadChannel
+from Channels.TestChannel import TestChannel
 
 
 config = dotenv_values(".env")
@@ -34,14 +32,7 @@ async def get_user_posts_view(request):
             handle_new_message,
             events.NewMessage(
                 chats=[
-                    PeerChannel(int(config["CHANNEL_FEYZ"])),
-                    PeerChannel(int(config["CHANNEL_TEST_FEYZIAN"])),
-
-                    PeerChannel(int(config["CHANNEL_ALI_BEY"])),
-                    PeerChannel(int(config["CHANNEL_TEST_ALI_BEYRANVAND"])),
-
-                    PeerChannel(int(config["CHANNEL_RASTAD"])),
-                    PeerChannel(int(config["CHANNEL_TEST_RASTAD"])),
+                    PeerChannel(int(config["CHANNEL_TEST"])),
                 ]
             ),
         )
@@ -49,11 +40,8 @@ async def get_user_posts_view(request):
         #     handle_message_edit,
         #     events.MessageEdited(
         #         chats=[
-        #             PeerChannel(int(config["CHANNEL_FEYZ"])),
-        #             PeerChannel(int(config["CHANNEL_TEST_FEYZIAN"])),
+        #             PeerChannel(int(config["CHANNEL_TEST"])),
 
-        #             PeerChannel(int(config["CHANNEL_ALI_BEY"])),
-        #             PeerChannel(int(config["CHANNEL_TEST_ALI_BEYRANVAND"])),
         
         #         ]
         #     ),
@@ -63,30 +51,16 @@ async def get_user_posts_view(request):
     # return JsonResponse({"posts": []})
 
 
-async def channelFeyzian(msg):
-    p1 = FeyzianChannel()
+async def channelTest(msg):
+    p1 = TestChannel()
     await p1.extractDataFromMessage(msg)
     
-async def channelRastad(msg):
-    p1 = RastadChannel()
-    await p1.extractDataFromMessage(msg)
-
-
-async def channelAliBeyro(msg):
-    p1 = AliBeyroChannel()
-    await p1.extractDataFromMessage(msg)
 
 
 
 
 options = {
-    int(config["CHANNEL_FEYZ"]): channelFeyzian,
-    int(config["CHANNEL_TEST_FEYZIAN"]): channelFeyzian,
+    int(config["CHANNEL_TEST"]): channelTest,
 
-    int(config["CHANNEL_ALI_BEY"]): channelAliBeyro,
-    int(config["CHANNEL_TEST_ALI_BEYRANVAND"]): channelAliBeyro,
-
-    int(config["CHANNEL_RASTAD"]): channelRastad,
-    int(config["CHANNEL_TEST_RASTAD"]): channelRastad,
 
 }
