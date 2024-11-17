@@ -219,7 +219,7 @@
                                 >
                                   <i class="fas fa-window-maximize text-yellow"></i>
                                 </a>
-                                {% if predict.status.name != 'FAILED'%}
+                                <!-- {% if predict.status.name != 'FAILED'%}
                                   <a
                                     href="{% url 'Panel:change_predict_status' predict.id 'FAILED' %}"
                                     title="Fail"
@@ -235,12 +235,12 @@
                                     class="ml-2" >
                                     <i class="far fa-smile-beam text-lime"></i>
                                   </a>
-                                {% endif %}
+                                {% endif %} -->
                                 
                                 
                                 {% if predict.status.name == 'PENDING' and predict.order_id %}
                                 <a
-                                  href="{% url 'Panel:cancel_order' predict.symbol.name predict.order_id predict.market.name%}"
+                                  href="{% url 'exchange:cancel_order' predict.symbol.name predict.order_id predict.market.name%}"
                                   title="Cancel Order"
                                   class="ml-2"
                                 >
