@@ -31,16 +31,16 @@ from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValu
 _config = dotenv_values(".env")
 # abs ==> abstract
 class TestChannel(AbsChannel):
-    _channel_id = _config["CHANNEL_TEST"]
+    _channel_id = _config["CHANNEL_FEYZ"]
 
     # abs
     def isPredictMsg(self, msg)->bool:
         patterns = [
-            r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
-            r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
-            r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
-            r"Market:\s*([A-Z]+)",
-            r"(StopLoss|Description):\s*([\d.]|\w+)",
+        r"Symbol:\s*#?([A-Z0-9]+)[/\s]?USDT",
+        r"Take-Profit Targets:([\s\S]+?)(StopLoss|Description)",
+        r"Entry (Targets|Price):([\s\S]+?)Take-Profit",
+        r"Market:\s*([A-Z]+)",
+        r"(StopLoss|Description):\s*([\d.]|\w+)",
         ]
 
         # Check if all patterns have a value
@@ -233,7 +233,6 @@ class TestChannel(AbsChannel):
             "position": position_value,
             "market": market_value,
             "leverage": leverage_value,
-            "stopLoss": stopLoss_value,
             "margin_mode": marginMode_value,
             "profit": 0,
             "status": status_value, 
@@ -243,6 +242,7 @@ class TestChannel(AbsChannel):
 
         newPredict = Predict(**PredictData)
         await newPredict.asave()
+        first_entry_value = entry_targets_value[0]
         
         stoploss = StopLoss(
             **{
@@ -257,11 +257,9 @@ class TestChannel(AbsChannel):
 
 
         # set entry value objects to DB
-        first_entry_value = None
         if entry_targets_value:
             for i, value in enumerate(entry_targets_value):
-                if i == 0:
-                    first_entry_value = value
+                
                 entryData = EntryTarget(
                     **{
                         "predict": newPredict,
