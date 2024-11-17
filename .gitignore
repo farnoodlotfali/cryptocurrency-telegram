@@ -4,7 +4,6 @@
 *.whl
 *.session-journal
 __pycache__/
-migrations
 
 .venv/
 .tvenv/
@@ -16,3 +15,7 @@ errors-in-channel
 strategy-reports
 
 TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
+
+*/*/migrations/*.py
+# Except the __init__.py files
+!*/*/migrations/__init__.py

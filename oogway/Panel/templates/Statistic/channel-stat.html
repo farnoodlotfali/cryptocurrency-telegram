@@ -1,5 +1,4 @@
-{% load static %}
-{% load navigation_tags %}
+{% load static %} {% load navigation_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -13,15 +12,15 @@
       rel="stylesheet"
       href="{% static 'plugins/fontawesome-free/css/all.min.css' %}"
     />
-      <!-- Tempusdominus Bootstrap 4 -->
-      <link
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link
       rel="stylesheet"
       href="{% static 'plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}"
     />
-     <!-- Select2 -->
+    <!-- Select2 -->
     <link
-     rel="stylesheet"
-     href="{% static 'plugins/select2/css/select2.min.css' %}"
+      rel="stylesheet"
+      href="{% static 'plugins/select2/css/select2.min.css' %}"
     />
     <!-- DataTables -->
     <link
@@ -48,16 +47,15 @@
     <div class="wrapper">
       <!-- Content Wrapper. Contains page content -->
       <div class="content-wrapper mt-2">
-     
-
         <section class="content">
           <div class="container-fluid">
             <div class="row">
-
               <div class="col-md-6">
                 <div class="card card-success">
                   <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> Statistic Total Table</h3>
+                    <h3 class="card-title">
+                      <i class="fas fa-table mr-1"></i> Statistic Total Table
+                    </h3>
 
                     <div class="card-tools">
                       <button
@@ -88,21 +86,18 @@
                         </tr>
                       </thead>
                       <tbody>
-
                         {% for item in stat_total %}
-                          <tr>
-                            <th 
-                            >
-                              <!-- name -->
-                              {{item.post__channel__name}}
-                            </th>
-                            <th>
-                              <!-- total_profit -->
-                              {{item.total_profit|floatformat:2}}
-                            </th>
-                          </tr>
+                        <tr>
+                          <th>
+                            <!-- name -->
+                            {{item.post__channel__name}}
+                          </th>
+                          <th>
+                            <!-- total_profit -->
+                            {{item.total_profit|floatformat:2}}
+                          </th>
+                        </tr>
                         {% endfor %}
-
                       </tbody>
                       <tfoot>
                         <tr>
@@ -112,17 +107,16 @@
                       </tfoot>
                     </table>
                   </div>
-              
                 </div>
-
               </div>
 
-              <div class="col-md-6" >
+              <div class="col-md-6">
                 <div class="card card-purple">
                   <div class="card-header">
                     <h3 class="card-title">
                       <i class="fas fa-chess-knight mr-1"></i>
-                      Profit% Total</h3>
+                      Profit% Total
+                    </h3>
 
                     <div class="card-tools">
                       <button
@@ -161,7 +155,9 @@
               <div class="col-md-12">
                 <div class="card card-fuchsia">
                   <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-table mr-1"></i>Channel Rank</h3>
+                    <h3 class="card-title">
+                      <i class="fas fa-table mr-1"></i>Channel Rank
+                    </h3>
 
                     <div class="card-tools">
                       <button
@@ -197,40 +193,38 @@
                         </tr>
                       </thead>
                       <tbody>
-
                         {% for item in channel_predict_result_final %}
-                          <tr>
-                            <th>
-                              <!-- index -->
-                              {{ forloop.counter }}
-                            </th>
-                            <th>
-                              <!-- name -->
-                              {{item.name}}
-                            </th>
-                            <th>
-                              <!-- total_count-->
-                              {{item.total_count}}
-                            </th> 
-                            <th>
-                              <!-- FAILED_GROUP-->
-                              {{item.FAILED_GROUP}}
-                            </th>
-                            <th>
-                              <!-- SUCCESS_GROUP -->
-                              {{item.SUCCESS_GROUP}}
-                            </th>
-                            <th>
-                              <!-- Win Rate -->
-                              {{item.win_rate|floatformat:2}}
-                            </th>
-                            <th>
-                              <!-- Loss Rate -->
-                              {{item.loss_rate|floatformat:2}}
-                            </th>
-                          </tr>
+                        <tr>
+                          <th>
+                            <!-- index -->
+                            {{ forloop.counter }}
+                          </th>
+                          <th>
+                            <!-- name -->
+                            {{item.name}}
+                          </th>
+                          <th>
+                            <!-- total_count-->
+                            {{item.total_count}}
+                          </th>
+                          <th>
+                            <!-- FAILED_GROUP-->
+                            {{item.FAILED_GROUP}}
+                          </th>
+                          <th>
+                            <!-- SUCCESS_GROUP -->
+                            {{item.SUCCESS_GROUP}}
+                          </th>
+                          <th>
+                            <!-- Win Rate -->
+                            {{item.win_rate|floatformat:2}}
+                          </th>
+                          <th>
+                            <!-- Loss Rate -->
+                            {{item.loss_rate|floatformat:2}}
+                          </th>
+                        </tr>
                         {% endfor %}
-
                       </tbody>
                       <tfoot>
                         <tr>
@@ -245,16 +239,16 @@
                       </tfoot>
                     </table>
                   </div>
-              
                 </div>
-
               </div>
-
 
               <div class="col-md-12">
                 <div class="card card-orange">
                   <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-table mr-1"></i> Statistic Per Month Table</h3>
+                    <h3 class="card-title">
+                      <i class="fas fa-table mr-1"></i> Statistic Per Month
+                      Table
+                    </h3>
 
                     <div class="card-tools">
                       <button
@@ -286,25 +280,22 @@
                         </tr>
                       </thead>
                       <tbody>
-
                         {% for item in stat_per_month %}
-                          <tr>
-                            <th 
-                            >
-                              <!-- name -->
-                              {{item.post__channel__name}}
-                            </th>
-                            <th>
-                              <!-- month-->
-                              {{item.month|date:"F Y"}}
-                            </th>
-                            <th>
-                              <!-- total_profit -->
-                              {{item.total_profit|floatformat:2}}
-                            </th>
-                          </tr>
+                        <tr>
+                          <th>
+                            <!-- name -->
+                            {{item.post__channel__name}}
+                          </th>
+                          <th>
+                            <!-- month-->
+                            {{item.month|date:"F Y"}}
+                          </th>
+                          <th>
+                            <!-- total_profit -->
+                            {{item.total_profit|floatformat:2}}
+                          </th>
+                        </tr>
                         {% endfor %}
-
                       </tbody>
                       <tfoot>
                         <tr>
@@ -315,18 +306,16 @@
                       </tfoot>
                     </table>
                   </div>
-              
                 </div>
-
               </div>
 
-
-              <div class="col-md-12" >
+              <div class="col-md-12">
                 <div class="card card-yellow">
                   <div class="card-header">
                     <h3 class="card-title">
                       <i class="fas fa-chess-knight mr-1"></i>
-                      Profit% Per Month</h3>
+                      Profit% Per Month
+                    </h3>
 
                     <div class="card-tools">
                       <button
@@ -361,9 +350,6 @@
                   <!-- /.card-body -->
                 </div>
               </div>
-
-
-            
             </div>
           </div>
         </section>
@@ -402,10 +388,12 @@
     <script src="{% static 'plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
     <script src="{% static 'plugins/datatables-buttons/js/buttons.print.min.js' %}"></script>
     <script src="{% static 'plugins/datatables-buttons/js/buttons.colVis.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js" ></script>
-   <script>
+    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
+    <script>
       $(document).ready(function () {
-        loadChannelStatPerMonthChart(`/panel/chart/channel-stat-per-month-chart`);
+        loadChannelStatPerMonthChart(
+          `/panel/chart/channel-stat-per-month-chart`
+        );
         loadChannelStatTotalChart(`/panel/chart/channel-stat-total-chart`);
       });
       $(function () {
@@ -420,7 +408,7 @@
         $("#dateFrom").datetimepicker({
           // defaultDate: "11/1/2013",
           format: "L",
-        }); 
+        });
         $("#dateTo").datetimepicker({
           format: "L",
         });
@@ -441,7 +429,7 @@
           .buttons()
           .container()
           .appendTo("#example1_wrapper .col-md-6:eq(0)");
-           $("#example2")
+        $("#example2")
           .DataTable({
             responsive: true,
             lengthChange: false,
@@ -456,7 +444,7 @@
           .buttons()
           .container()
           .appendTo("#example3_wrapper .col-md-6:eq(0)");
-           $("#example3")
+        $("#example3")
           .DataTable({
             responsive: true,
             lengthChange: false,
@@ -472,181 +460,215 @@
 
       function loadChannelStatTotalChart(endpoint) {
         $.ajax({
-              url: endpoint,
-              type: "GET",
-              dataType: "json",
-              success: (jsonResponse) => {
-                  
-                  // Process data to structure it for the chart
-                  const labels = [...new Set(jsonResponse.map(item => item.post__channel__name))]; // Extract unique channel names
-                  const dataValues = jsonResponse.map(item => Math.round(item.total_profit)); // Get total profit values and round them
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (jsonResponse) => {
+            // Process data to structure it for the chart
+            const labels = [
+              ...new Set(jsonResponse.map((item) => item.post__channel__name)),
+            ]; // Extract unique channel names
+            const dataValues = jsonResponse.map((item) =>
+              Math.round(item.total_profit)
+            ); // Get total profit values and round them
 
-                  // Chart data
-                  const areaChartData = {
-                      labels: labels,
-                      datasets: [
-                          {
-                              label: "Total Profit",
-                              backgroundColor: "#fa931aaf",
-                              borderColor: "#fa931a",
-                              pointRadius: false,
-                              data: dataValues
-                          }
-                      ]
-                  };
+            // Chart data
+            const areaChartData = {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Total Profit",
+                  backgroundColor: "#fa931aaf",
+                  borderColor: "#fa931a",
+                  pointRadius: false,
+                  data: dataValues,
+                },
+              ],
+            };
 
-                  // Chart options
-                  const barChartCanvas = $("#barChart2").get(0).getContext("2d");
-                  const barChartOptions = {
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      datasetFill: false,
-                      legend: {
-                          labels: {
-                              fontColor: "#fff",
-                          },
-                      },
-                      plugins: {
-                          labels: {
-                              render: 'value',
-                              showZero: true,
-                              fontSize: 12,
-                              fontColor: '#fff',
-                          }
-                      },
-                      scales: {
-                          xAxes: [{
-                              ticks: {
-                                  fontColor: "#fff",
-                              },
-                              gridLines: {
-                                  color: "#ffffff61"
-                              }
-                          }],
-                          yAxes: [{
-                              ticks: {
-                                  fontColor: "#fff",
-                              },
-                              gridLines: {
-                                  color: "#ffffff61",
-                                  zeroLineColor: "#ff0000",  // High contrast color for y=0 line
-                                  zeroLineWidth: 2
-                              }
-                          }]
-                      }
-                  };
-
-                  // Create the chart
-                  new Chart(barChartCanvas, {
-                      type: "bar",
-                      data: areaChartData,
-                      options: barChartOptions,
-                  });
+            // Chart options
+            const barChartCanvas = $("#barChart2").get(0).getContext("2d");
+            const barChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              datasetFill: false,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
               },
-              error: () => console.log("Failed to fetch chart data from " + endpoint + "!"),
-          });
-        }
+              plugins: {
+                labels: {
+                  render: "value",
+                  showZero: true,
+                  fontSize: 12,
+                  fontColor: "#fff",
+                },
+              },
+              scales: {
+                xAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
+                    },
+                    gridLines: {
+                      color: "#ffffff61",
+                    },
+                  },
+                ],
+                yAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
+                    },
+                    gridLines: {
+                      color: "#ffffff61",
+                      zeroLineColor: "#ff0000", // High contrast color for y=0 line
+                      zeroLineWidth: 2,
+                    },
+                  },
+                ],
+              },
+            };
 
-
-
+            // Create the chart
+            new Chart(barChartCanvas, {
+              type: "bar",
+              data: areaChartData,
+              options: barChartOptions,
+            });
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
+        });
+      }
 
       function loadChannelStatPerMonthChart(endpoint) {
         $.ajax({
-            url: endpoint,
-            type: "GET",
-            dataType: "json",
-            success: (jsonResponse) => {
-                
-                // Process data to structure it for the chart
-                const labels = [...new Set(jsonResponse.map(item => new Intl.DateTimeFormat('en', {year:'numeric', month: 'short' }).format(new Date( item.month)) ))]; // Extract unique months
-                const channels = [...new Set(jsonResponse.map(item => item.post__channel__name))]; // Extract unique channels
+          url: endpoint,
+          type: "GET",
+          dataType: "json",
+          success: (jsonResponse) => {
+            // Process data to structure it for the chart
+            const labels = [
+              ...new Set(
+                jsonResponse.map((item) =>
+                  new Intl.DateTimeFormat("en", {
+                    year: "numeric",
+                    month: "short",
+                  }).format(new Date(item.month))
+                )
+              ),
+            ]; // Extract unique months
+            const channels = [
+              ...new Set(jsonResponse.map((item) => item.post__channel__name)),
+            ]; // Extract unique channels
 
-                const datasets = channels.map(channelName => {
-                    const channelData = jsonResponse
-                        .filter(item => item.post__channel__name === channelName)
-                        .map(item => Math.round(item.total_profit));
+            const datasets = channels.map((channelName) => {
+              const channelData = jsonResponse
+                .filter((item) => item.post__channel__name === channelName)
+                .map((item) => Math.round(item.total_profit));
 
-                    return {
-                        label: channelName,
-                        backgroundColor: getRandomColor(), // Dynamic color for each channel
-                        borderColor: getRandomColor(),
-                        pointRadius: false,
-                        data: channelData
-                    };
-                });
+              return {
+                label: channelName,
+                backgroundColor: getRandomColor(), // Dynamic color for each channel
+                borderColor: getRandomColor(),
+                pointRadius: false,
+                data: channelData,
+              };
+            });
+            let maxLength = 0;
 
-                // Chart data
-                const areaChartData = {
-                    labels: labels,
-                    datasets: datasets
-                };
+            datasets.forEach((item) => {
+              if (item.data.length > maxLength) {
+                maxLength = item.data.length;
+              }
+            });
 
-                // Chart options
-                const barChartCanvas = $("#barChart1").get(0).getContext("2d");
-                const barChartOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    datasetFill: false,
-                    legend: {
-                        labels: {
-                            fontColor: "#fff",
-                        },
+            const newDataSets = datasets.map((item) => {
+              const amount = maxLength - item.data.length;
+              let newData = [];
+              for (let i = 0; i < amount; i++) {
+                newData.push(0);
+              }
+              newData = [...newData, ...item.data];
+              return {
+                ...item,
+                data: newData,
+              };
+            });
+
+            // Chart data
+            const areaChartData = {
+              labels: labels,
+              datasets: newDataSets,
+            };
+
+            // Chart options
+            const barChartCanvas = $("#barChart1").get(0).getContext("2d");
+            const barChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              datasetFill: false,
+              legend: {
+                labels: {
+                  fontColor: "#fff",
+                },
+              },
+              plugins: {
+                labels: {
+                  render: "value",
+                  showZero: true,
+                  fontSize: 12,
+                  fontColor: "#fff",
+                },
+              },
+              scales: {
+                xAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
                     },
-                    plugins: {
-                        labels: {
-                            render: 'value',
-                            showZero: true,
-                            fontSize: 12,
-                            fontColor: '#fff',
-                        }
+                    gridLines: {
+                      color: "#ffffff61",
                     },
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                fontColor: "#fff",
-                            },
-                            gridLines: {
-                                color: "#ffffff61"
-                            }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                fontColor: "#fff",
-                            },
-                            gridLines: {
-                              color: "#ffffff61",
-                              zeroLineColor: "#ff0000",  // High contrast color for y=0 line
-                              zeroLineWidth: 2
-                            }
-                        }]
-                    }
-                };
+                  },
+                ],
+                yAxes: [
+                  {
+                    ticks: {
+                      fontColor: "#fff",
+                    },
+                    gridLines: {
+                      color: "#ffffff61",
+                      zeroLineColor: "#ff0000", // High contrast color for y=0 line
+                      zeroLineWidth: 2,
+                    },
+                  },
+                ],
+              },
+            };
 
-                // Create the chart
-                new Chart(barChartCanvas, {
-                    type: "bar",
-                    data: areaChartData,
-                    options: barChartOptions,
-                });
-            },
-            error: () => console.log("Failed to fetch chart data from " + endpoint + "!"),
+            // Create the chart
+            new Chart(barChartCanvas, {
+              type: "bar",
+              data: areaChartData,
+              options: barChartOptions,
+            });
+          },
+          error: () =>
+            console.log("Failed to fetch chart data from " + endpoint + "!"),
         });
-
-
       }
-
 
       function getRandomColor() {
-          const letters = '0123456789ABCDEF';
-          let color = '#';
-          for (let i = 0; i < 6; i++) {
-              color += letters[Math.floor(Math.random() * 16)];
-          }
-          return color;
+        const letters = "0123456789ABCDEF";
+        let color = "#";
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
       }
-
-
-
     </script>
   </body>
 </html>
