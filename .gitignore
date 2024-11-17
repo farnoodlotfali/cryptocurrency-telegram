@@ -1,6 +1,7 @@
 .env
 .venv
 *.session
+*.whl
 *.session-journal
 __pycache__/
 

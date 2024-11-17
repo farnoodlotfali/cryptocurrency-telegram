@@ -8,7 +8,7 @@ _path_folder = os.path.join(os.path.dirname(__file__), "../historic-json")
 
 # example ==> BTC-SPOT-bingx
 def ohlcv_name_file(symbolName:str, marketName:MarketName)-> str:
-    return f'{symbolName.replace('/','-').split(':')[0]}-{marketName}-{exchange.id}'
+    return f"{symbolName.replace('/', '-').split(':')[0]}-{marketName}-{exchange.id}"
 
 # load data of tohlcv / Timestamp, Open, High, Low, Close, Volume
 def load_historic_tohlcv_json(symbolName:str, marketName:MarketName)-> list[any]:
