@@ -5,8 +5,11 @@ from Shared.Exchange import exchange
 from PostAnalyzer.models import (
     Market,
     Symbol,
+    Predict,
+    PostStatus
 )
 from Shared.Constant import MarketValues
+from django.shortcuts import redirect
 
 
 LOGIN_PAGE_URL = "/panel/login"
@@ -44,14 +47,15 @@ def save_symbols(request):
 @login_required(login_url=LOGIN_PAGE_URL)
 def cancel_order(request, symbol, order_id=None, market=None):
     print(symbol, order_id, market)
-    # try:
-    #     exchange.cancel_order(id=order_id,symbol=symbol)
-    #     predict = Predict.objects.get(order_id=order_id)
-    #     cancelStatus = PostStatus.objects.get(name="CANCELED")
-    #     predict.status = cancelStatus
-    #     predict.save()
-    # except:
-    #     print("error")
-    # data = serializers.serialize("json", order_data)
+    try:
+        res = exchange.cancel_order(id=order_id,symbol=symbol)
+        print(res)
+        predict = Predict.objects.filter(order_id=order_id).first()
+        if predict:
+            cancelStatus = PostStatus.objects.get(name="CANCELED")
+            predict.status = cancelStatus
+            predict.save()
+    except:
+        print("error")
 
-    # return redirect("Panel:predict")
+    return redirect("Panel:predict")
