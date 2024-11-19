@@ -31,7 +31,7 @@ from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValu
 _config = dotenv_values(".env")
 # abs ==> abstract
 class TestChannel(AbsChannel):
-    _channel_id = _config["CHANNEL_FEYZ"]
+    _channel_id = _config["CHANNEL_TEST"]
 
     # abs
     def isPredictMsg(self, msg)->bool:
