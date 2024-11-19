@@ -1,6 +1,51 @@
-## make .env file and fill variables
+# Installation
+You can See tutorial(Movies) instead of reading.
 
+* First(Required)
+<ol>
+  <li>Make .env file and fill variables</li>
+  <li>You can Find api_id and api_hash in https://my.telegram.org</li>
+  <li>You can Find SECRET_KEY and API_KEY from your exchange api development</li>
+  <li>set your name for username</li>
+  <li>Find Channel id and set it for CHANNEL_TEST (check video 5-setup-find-channel_id)</li>
+  <li>set DEBUG=True in development and False in production</li>
+  <li>Find your EXCHANGE_ID by running otherExchange.ipynb</li>
+</ol>
+<br>
+
+* Second(Not Required for All Type Users)
+<ol>
+  <li>Create virtualenv using terminal(for windows==>py -m venv .venv)</li>
+  <li>Activate virtual env using terminal(for windows==>.\.venv\Scripts\activate)</li>
+  <li>Install Dependencies (pip install -r .\oogway\requirements.txt)</li>
+</ol>
+<br>
+
+* Third(Not Required for All Type Users)
+<ol>
+  <li>Create DB(check video 7-setup-database)</li>
+  <li>Check Variables in DATABASES in settings.py</li>
+  <li>py manage.py makemigrations</li>
+  <li>py manage.py migrate</li>
+</ol>
+<br>
+
+* Fourth(Not Required for All Type Users)
+<ol>
+  <li>Run prepare.ipynb file in prepare folder</li>
+</ol>
+<br>
+
+* Fifth
+<ol>
+  <li>py manage.py createsuperuser</li>
+  <li>py manage.py runserver</li>
+  <li>http://localhost:8000/panel</li>
+</ol>
+
+---
 ### to install ta-lib check https://github.com/cgohlke/talib-build
+---
 
 ## Movies
 
