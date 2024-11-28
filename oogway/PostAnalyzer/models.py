@@ -74,7 +74,7 @@ class Predict(models.Model):
     position = models.ForeignKey(PositionSide, on_delete=models.CASCADE,editable=True)
     margin_mode = models.ForeignKey(MarginMode, on_delete=models.CASCADE, editable=True, null=True,default=None)
     leverage = models.IntegerField(default=1, editable=True, null=True)
-    # stopLoss = models.FloatField(editable=True, null=True)
+    stopLoss = models.FloatField(editable=True, null=True)
     profit = models.FloatField(default=0, editable=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     order_id = models.CharField(max_length=50, editable=True, null=True, default=None, blank=True)

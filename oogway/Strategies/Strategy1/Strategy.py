@@ -54,21 +54,34 @@ class Strategy1(AbsStrategy):
 
 
             # get take-profits 
-            take_profit = await sync_to_async(
+            all_active_take_profit = await sync_to_async(
+                lambda: list(TakeProfitTarget.objects.filter(predict=pr, active =True).order_by('index'))
+            )()
+            all_take_profit = await sync_to_async(
                 lambda: list(TakeProfitTarget.objects.filter(predict=pr).order_by('index'))
             )()
-
-            active_take_profit = await sync_to_async(
-                lambda: list(TakeProfitTarget.objects.filter(predict=pr, active=True).order_by('index'))
-            )() 
             
+            active_tp_len = len(all_active_take_profit)
+            tp_len = len(all_take_profit)
+
+            is_fulltarget = active_tp_len == tp_len
+
+            is_success = is_fulltarget or (active_tp_len > 0 and active_tp_len >= close_tp)
+            # print(is_success)
+
+            if is_success:
+                index = tp_len if (is_fulltarget and active_tp_len <= close_tp) else close_tp
+                index -= 1
+                active_take_profit = await sync_to_async(TakeProfitTarget.objects.get)(predict=pr, index=index)
+                # print(active_take_profit.index, active_take_profit.profit)
+            
+
             active_entry = await sync_to_async(
                 lambda: list(EntryTarget.objects.filter(predict=pr, active=True).order_by('index'))
             )()
 
             # get stoploss 
             stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
-
 
 
             # add positionSize to pending money
@@ -89,40 +102,49 @@ class Strategy1(AbsStrategy):
 
             is_hit = False
             
-            tp_len = len(take_profit)
-            active_tp_len = len(active_take_profit)
-            is_fulltarget = active_tp_len >= close_tp
 
-            if close_tp > tp_len:
-                is_fulltarget = tp_len == active_tp_len
-
-            # if (active_tp_len < close_tp) and (tp_len != active_tp_len):
-            #     continue
-
-
-            if is_fulltarget or (statusName == PostStatusValues.SUCCESS.value):
+            if is_success:
                 is_hit = True
 
-                profit = active_take_profit[active_tp_len-1].profit/100
+                profit = active_take_profit.profit/100
                 profit_money_value = positionSize * profit
                 money_back = positionSize + profit_money_value
+                self.total_opening_orders += 1
 
-                date = int(active_take_profit[active_tp_len-1].date.timestamp()*1000)
+                
+                date = int(active_take_profit.date.timestamp()*1000)
                 self.updateMoneyManagement(id=pr.id, end_date=date, money_back=money_back)
                 self.removeFromPending(order=pr)
                 self.addEntryOrder(order=pr, active_date=int(active_entry[0].date.timestamp()*1000))
-                self.addProfitOrder(order=pr, profit=profit, status_date=date, position_size=positionSize, money_back=money_back, type= active_tp_len if statusName == PostStatusValues.SUCCESS.value else 1000)
-
-            elif statusName in [PostStatusValues.FAILED_WITH_PROFIT.value, PostStatusValues.FAILED.value]:
+                self.addProfitOrder(order=pr, profit=profit, status_date=date, position_size=positionSize, money_back=money_back, type=index)
+            
+            elif statusName == PostStatusValues.SUCCESS.value:
                 is_hit = True
                 profit = pr.profit/100
                 profit_money_value = positionSize * profit
                 money_back = positionSize + profit_money_value
+                self.total_opening_orders += 1
+
+                date = int(all_active_take_profit[-1].date.timestamp()*1000)
+                self.updateMoneyManagement(id=pr.id, end_date=date, money_back=money_back)
+                self.removeFromPending(order=pr)
+                self.addEntryOrder(order=pr, active_date=int(active_entry[0].date.timestamp()*1000))
+                self.addProfitOrder(order=pr, profit=profit, status_date=date, position_size=positionSize, money_back=money_back, type=index)
+           
+
+            elif statusName == PostStatusValues.FAILED.value  or (not is_success and statusName != PostStatusValues.PENDING.value):
+                is_hit = True
+                profit = pr.profit/100
+                profit_money_value = positionSize * profit
+                money_back = positionSize + profit_money_value
+                self.total_opening_orders += 1
+                # print(statusName)
+
                 date = int(stoploss.date.timestamp()*1000)
                 self.updateMoneyManagement(id=pr.id, end_date=date, money_back=money_back)
                 self.removeFromPending(order=pr)
                 self.addEntryOrder(order=pr, active_date=int(active_entry[0].date.timestamp()*1000))
-                self.addLossOrder(order=pr, profit=profit, status_date=date, money_back=money_back, position_size=positionSize, type= -1 if len(active_entry) == 0 else len(active_entry))
+                self.addLossOrder(order=pr, profit=profit, status_date=date, money_back=money_back, position_size=positionSize, type= -1)
 
             # self.orderDetailController(entry_targets=entry_reached, predict=pr, stopLoss=stop_loss, take_profit_targets=tps, stopLoss_time=stop_loss_reached)
 

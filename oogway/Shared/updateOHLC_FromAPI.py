@@ -4,6 +4,7 @@ from Shared.Exchange import exchange
 from Shared.types import MarketName
 from typing import Optional, Literal
 from bisect import bisect_left
+from datetime import datetime
 
 
 async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:MarketName, max_day_wait:int = 10):
@@ -61,7 +62,8 @@ async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:Mar
 
 # start_timestamp must be milli timestamp
 def checkCompletion(start_timestamp: int, max_day_wait: int, LData: list[list[int]]) -> tuple[bool, int]:
-  
+    today_timestamp = zero_hours_minutes_seconds(int(datetime.now().timestamp()*1000))
+    
     zero_start_timestamp = zero_hours_minutes_seconds(start_timestamp)
     timestamps = [row[0] for row in LData]
 
@@ -74,6 +76,9 @@ def checkCompletion(start_timestamp: int, max_day_wait: int, LData: list[list[in
         
         # Check if the item exists at the found index
         if index == len(timestamps) or timestamps[index] != item:
+            if today_timestamp < item:
+                return (True, None)
+            
             return (False, item)  # Return False and the missing timestamp
     
     return (True, None)  # All timestamps exist
