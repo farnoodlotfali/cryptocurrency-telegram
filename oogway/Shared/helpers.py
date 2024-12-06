@@ -131,3 +131,12 @@ def findProfit(first_value:float, second_value:float, leverage:int, percent:bool
         return profit
 
     return profit/100
+
+
+
+
+def find_nearest_number_for_coienex_leverage(target):
+    arr = [1, 2, 3, 5, 8, 10, 15, 20, 30, 50, 100]
+    return min(arr, key=lambda x: abs(x - target))
+
+

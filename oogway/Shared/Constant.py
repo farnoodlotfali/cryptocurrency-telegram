@@ -45,6 +45,15 @@ class TrendValues(Enum):
     DOWNTREND = 'DOWNTREND'
     SIDEWAYS = 'SIDEWAYS'
 
+
+class OrderSide(Enum):
+    BUY = 'buy'
+    SELL = 'sell'
+
+class OrderType(Enum):
+    LIMIT = 'limit'
+    MARKET = 'market'
+
 # 60 percent
 MAX_PROFIT_VALUE = 60
 

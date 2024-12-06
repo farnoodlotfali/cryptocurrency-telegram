@@ -16,9 +16,10 @@ strategy-reports
 
 TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
 
-# test-all-strategies.csv
-# test-all-strategies.json
+test-all-strategies.csv
+test-all-strategies.json
 
 */*/migrations/*.py
 # Except the __init__.py files
 !*/*/migrations/__init__.py
+

@@ -18,13 +18,13 @@ from PostAnalyzer.models import (
     MarginMode,
     StopLoss
 )
-from Shared.helpers import returnSearchValue, print_colored, subtractTime, findProfit
+from Shared.helpers import returnSearchValue, print_colored, subtractTime, findProfit, find_nearest_number_for_coienex_leverage
 from Shared.Exchange import exchange
 from Shared.findSameSignal import findSameSignal
 from Shared.findShortOrderStat import findShortOrderStat
 from Shared.findLongOrderStat import findLongOrderStat
 from Shared.types import Stat
-from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValues, MarketValues
+from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValues, MarketValues, OrderSide, OrderType
 
 # ****************************************************************************************************************************
 
@@ -178,178 +178,141 @@ class FeyzianChannel(AbsChannel):
     async def predictParts(self, string, post:Post)-> Optional[Predict]:
         if string is None or post is None:
             return None
-        
-    # try:
-        settings = await SettingConfig.objects.aget(id=1)
-    
-        # market
-        market_value= await self.findMarket(string)
-        isSpot = market_value.name == MarketValues.SPOT.value
-
-        # symbol
-        symbol_value = await self.findSymbol(string, market_value)
-
-        # position, leverage, marginMode
-        position_value = None
-        leverage_value = None
-        marginMode_value = None
-        if not isSpot:
-            position_value = await self.findPosition(string)
-            marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
-        else:
-            position_value= await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
-        
-        # stopLoss
-        stopLoss_value = self.findStopLoss(string)
-
-        # entry targets
-        entry_targets_value = self.findEntryTargets(string)
-
-        # status    
-        status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
-
-        # take_profit targets
-        take_profit_targets_value = self.findTakeProfits(string)
-
-        # return Error RR < 0.2
-        # TODO will add to setting, to get min RR
-        # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
-        
-        # if RR < 0.2 or RR > 4:
-        #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
-
-        # TODO check post.channel.id
-        # return false if signal already exists
-        # is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
-        #                             take_profit_targets_value,entry_targets_value,post.channel.id)
-        # if is_same_signal:
-        #     return False
-
-        # set predict object to DB
-        PredictData = {
-            "post": post,
-            "date": post.date,
-            "symbol": symbol_value,
-            "position": position_value,
-            "market": market_value,
-            "leverage": leverage_value,
-            "margin_mode": marginMode_value,
-            "profit": 0,
-            "status": status_value, 
-            "order_id": None,
-        }
-
-
-        newPredict = Predict(**PredictData)
-        await newPredict.asave()
-        first_entry_value = entry_targets_value[0]
-        
-        stoploss = StopLoss(
-            **{
-                "predict": newPredict,
-                "value": stopLoss_value,
-                "period": None,
-                "date": None,
-                "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
-            }
-        )
-        await stoploss.asave()
-
-
-        # set entry value objects to DB
-        if entry_targets_value:
-            for i, value in enumerate(entry_targets_value):
-                
-                entryData = EntryTarget(
-                    **{
-                        "predict": newPredict,
-                        "index": i,
-                        "value": value,
-                        "active": False,
-                        "period": None,
-                        "date": None,
-                    }
-                )
-                await entryData.asave()
-        
-        # set tp value objects to DB
-        first_tp_value = None
-        if take_profit_targets_value:
-            for i, value in enumerate(take_profit_targets_value):
-                if i == 0:
-                    first_tp_value = value
-
-                takeProfitData = TakeProfitTarget(
-                    **{
-                        "predict": newPredict,
-                        "index": i,
-                        "value": value,
-                        "active": False,
-                        "period": None,
-                        "profit": findProfit(first_entry_value, value, leverage_value),
-                        "date": None,
-                    }
-                )
-                await takeProfitData.asave()
-
-        # create order in exchange
-        if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
-            max_entry_money = settings.max_entry_money
-            leverage_effect = settings.leverage_effect
-
-            leverage_number = leverage_value if leverage_effect else 1
-            position = position_value.name
-            symbol = symbol_value.name
-
-            # set Margin Mode for a Pair in exchange
-            exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
-
-            # set Leverage for a Pair in exchange
-            exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
-                'side': position
-            })
-
-            size_volume = max_entry_money / float(first_entry_value)
             
-            # set order in exchange
-            print(first_entry_value, size_volume, "tp: ",first_tp_value,"sl: ", stopLoss_value, position)
-            order_data = exchange.create_order(
-                symbol=symbol,
-                type='limit',
-                side='buy',
-                amount=size_volume,
-                price=first_entry_value,
-                params={
-                    'positionSide': position,
-                    'takeProfit': {
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": size_volume,
-                        "stopPrice": first_tp_value,
-                        "price": first_tp_value,
-                        "workingType": "MARK_PRICE"
-                    },
-                    'stopLoss': {
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": size_volume,
-                        "stopPrice": stopLoss_value,
-                        "price": stopLoss_value,
-                        "workingType": "MARK_PRICE"
-                    }
+        try:
+            
+            # market
+            market_value= await self.findMarket(string)
+            isSpot = market_value.name == MarketValues.SPOT.value
+
+            # symbol
+            symbol_value = await self.findSymbol(string, market_value)
+
+            # position, leverage, marginMode
+            position_value = None
+            leverage_value = None
+            marginMode_value = None
+            if not isSpot:
+                position_value = await self.findPosition(string)
+                marginMode_value, leverage_value = await self.findLeverageAndMarginMode(string)
+            else:
+                position_value= await PositionSide.objects.aget(name=PositionSideValues.BUY.value)
+            
+            # stopLoss
+            stopLoss_value = self.findStopLoss(string)
+
+            # entry targets
+            entry_targets_value = self.findEntryTargets(string)
+
+            # status    
+            status_value = await PostStatus.objects.aget(name=PostStatusValues.PENDING.value)
+
+            # take_profit targets
+            take_profit_targets_value = self.findTakeProfits(string)
+
+            # return Error RR < 0.2
+            # TODO will add to setting, to get min RR
+            # RR = findRiskToReward(entry_targets_value, take_profit_targets_value, stopLoss_value)
+            
+            # if RR < 0.2 or RR > 4:
+            #     status_value = await sync_to_async(PostStatus.objects.get)(name="ERROR")
+
+            # TODO check post.channel.id
+            # return false if signal already exists
+            # is_same_signal = await findSameSignal(post.date, symbol_value,market_value,position_value, leverage_value, marginMode_value,stopLoss_value,
+            #                             take_profit_targets_value,entry_targets_value,post.channel.id)
+            # if is_same_signal:
+            #     return False
+
+            # set predict object to DB
+            PredictData = {
+                "post": post,
+                "date": post.date,
+                "symbol": symbol_value,
+                "position": position_value,
+                "market": market_value,
+                "leverage": leverage_value,
+                "margin_mode": marginMode_value,
+                "profit": 0,
+                "status": status_value, 
+                "order_id": None,
+            }
+
+
+            newPredict = Predict(**PredictData)
+            await newPredict.asave()
+            first_entry_value = entry_targets_value[0]
+            
+            stoploss = StopLoss(
+                **{
+                    "predict": newPredict,
+                    "value": stopLoss_value,
+                    "period": None,
+                    "date": None,
+                    "profit": findProfit(first_entry_value, stopLoss_value, leverage_value)*(-1),
                 }
             )
-            print(order_data)
+            await stoploss.asave()
 
+
+            # set entry value objects to DB
+            if entry_targets_value:
+                for i, value in enumerate(entry_targets_value):
+                    
+                    entryData = EntryTarget(
+                        **{
+                            "predict": newPredict,
+                            "index": i,
+                            "value": value,
+                            "active": False,
+                            "period": None,
+                            "date": None,
+                        }
+                    )
+                    await entryData.asave()
+            
+            # set tp value objects to DB
+            first_tp_value = None
+            if take_profit_targets_value:
+                for i, value in enumerate(take_profit_targets_value):
+                    if i == 0:
+                        first_tp_value = value
+
+                    takeProfitData = TakeProfitTarget(
+                        **{
+                            "predict": newPredict,
+                            "index": i,
+                            "value": value,
+                            "active": False,
+                            "period": None,
+                            "profit": findProfit(first_entry_value, value, leverage_value),
+                            "date": None,
+                        }
+                    )
+                    await takeProfitData.asave()
+
+
+            if position_value.name == PositionSideValues.SHORT.value:
+                side = OrderSide.SELL.value
+            else:
+                side = OrderSide.BUY.value
+
+            # create order in exchange
+            order_id = await self.createOrderInExchange(symbol=symbol_value.name, entry=first_entry_value,
+                                        leverage=leverage_value, side=side, type=OrderType.LIMIT.value, 
+                                        stoploss=stopLoss_value, takeProfit=first_tp_value, channel=post.channel,
+                                        position=position_value.name, isSpot=isSpot)
             
             # save orderId in DB
-            newPredict.order_id = order_data['info']['orderId']
+            newPredict.order_id = order_id
             await newPredict.asave()
 
-        
-        return newPredict
-    # except:
-        
-    #     # error_msg.append(model_to_dict(post))
-    #     return None
+            
+            return newPredict
+        except:
+            
+            # error_msg.append(model_to_dict(post))
+            return None
 
     #abs
     async def extractDataFromMessage(self, message):

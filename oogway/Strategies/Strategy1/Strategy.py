@@ -64,7 +64,7 @@ class Strategy1(AbsStrategy):
             active_tp_len = len(all_active_take_profit)
             tp_len = len(all_take_profit)
 
-            is_fulltarget = active_tp_len == tp_len
+            is_fulltarget = active_tp_len > 0 and active_tp_len == tp_len
 
             is_success = is_fulltarget or (active_tp_len > 0 and active_tp_len >= close_tp)
             # print(is_success)
@@ -79,7 +79,7 @@ class Strategy1(AbsStrategy):
             active_entry = await sync_to_async(
                 lambda: list(EntryTarget.objects.filter(predict=pr, active=True).order_by('index'))
             )()
-
+            
             # get stoploss 
             stoploss = await sync_to_async(StopLoss.objects.get)(predict=pr)
 

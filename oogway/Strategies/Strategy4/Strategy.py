@@ -144,7 +144,7 @@ class Strategy4(AbsStrategy):
                                 self.loss_count += 1
                                 is_hit = True
                                  # calculate the amount of loss
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit = -findProfit(new_entry, stop_loss, pr.leverage, False) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
 
@@ -212,7 +212,7 @@ class Strategy4(AbsStrategy):
                                 self.loss_count += 1
 
                                 # calculate the amount of loss
-                                profit += -findProfit(new_entry, stop_loss, pr.leverage, False) 
+                                profit = -findProfit(new_entry, stop_loss, pr.leverage, False) 
                                 profit_money_value = positionSize * profit
                                 money_back = positionSize + profit_money_value
 

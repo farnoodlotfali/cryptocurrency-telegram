@@ -13,13 +13,16 @@ from PostAnalyzer.models import (
     Predict,
     Symbol,
     PositionSide,
-    MarginMode
+    MarginMode,
+    SettingConfig,
+    Channel
 )
 from Shared.findError import findError
 from Shared.errorSaver import errorSaver
-from Shared.helpers import print_colored, convertToJsonFile
-from Shared.Constant import PositionSideValues, MarketValues, MAX_PROFIT_VALUE
+from Shared.helpers import print_colored, find_nearest_number_for_coienex_leverage
+from Shared.Constant import PositionSideValues, MarketValues, MAX_PROFIT_VALUE, OrderSide, OrderType, MarginModeValues
 import time
+from Shared.Exchange import exchange
 
 # ****************************************************************************************************************************
 
@@ -95,6 +98,78 @@ class AbsChannel(ABC):
     @abstractmethod
     async def extractDataFromMessage(self, msg:str):
         pass 
+    
+    async def createOrderInExchange(self, symbol:str, entry:float,
+                                    leverage:int, side:OrderSide, type:OrderType, 
+                                    stoploss:float, takeProfit:float, channel:Channel,
+                                    position:PositionSideValues, isSpot:bool)-> str:
+                                    
+        
+        settings = await SettingConfig.objects.aget(id=1)
+
+        if  not isSpot and channel.can_trade and settings.allow_channels_set_order and leverage <= settings.max_leverage:
+            max_entry_money = settings.max_entry_money
+            leverage_effect = settings.leverage_effect
+
+            leverage_number = leverage if leverage_effect else 1
+
+            # set Margin Mode for a Pair in exchange
+            # try:
+            #    await exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
+            # except Exception as e:
+            #     print(str(e))
+
+            # set Leverage for a Pair in exchange
+            # exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
+            #     'positionSide': position
+            # })
+            exchange.enableRateLimit = False
+            exchange.rateLimit = 1000
+            # exchange.verbose = True
+
+            exchange.set_leverage(
+                leverage=find_nearest_number_for_coienex_leverage(leverage_number),
+                symbol=symbol,
+                params={
+                    'marginMode': MarginModeValues.ISOLATED.value
+                }
+            )
+
+            size_volume = max_entry_money / float(entry)
+            
+            # set order in exchange
+            print(entry, size_volume, "tp: ",takeProfit,"sl: ", stoploss, position)
+            order_data = exchange.create_order(
+                symbol=symbol,
+                type=type,
+                side=side,
+                amount=size_volume,
+                price=entry,
+                params={
+                    'positionSide': position,
+                    'takeProfit': {
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": size_volume,
+                        "stopPrice": takeProfit,
+                        "price": takeProfit,
+                        "workingType": "MARK_PRICE"
+                    },
+                    'stopLoss': {
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": size_volume,
+                        "stopPrice": stoploss,
+                        "price": stoploss,
+                        "workingType": "MARK_PRICE"
+                    }
+                }
+            )
+            print(order_data)
+
+            exchange.enableRateLimit = True
+            exchange.rateLimit = 3000
+            # exchange.verbose = False
+            
+            return order_data['id']
 
 
      

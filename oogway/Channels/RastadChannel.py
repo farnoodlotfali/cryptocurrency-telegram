@@ -24,7 +24,7 @@ from Shared.findSameSignal import findSameSignal
 from Shared.findShortOrderStat import findShortOrderStat
 from Shared.findLongOrderStat import findLongOrderStat
 from Shared.types import Stat
-from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValues, MarketValues
+from Shared.Constant import PostStatusValues, PositionSideValues, MarginModeValues, MarketValues,  OrderSide, OrderType
 
 # ****************************************************************************************************************************
 
@@ -132,7 +132,6 @@ class RastadChannel(AbsChannel):
             return None
         
         try:
-            settings = await SettingConfig.objects.aget(id=1)
         
             # market
             market_value= await self.findMarket(string)
@@ -246,58 +245,21 @@ class RastadChannel(AbsChannel):
                     )
                     await takeProfitData.asave()
 
+           
+            if position_value.name == PositionSideValues.SHORT.value:
+                side = OrderSide.SELL.value
+            else:
+                side = OrderSide.BUY.value
+
             # create order in exchange
-            if  not isSpot and post.channel.can_trade and settings.allow_channels_set_order and leverage_value <= settings.max_leverage:
-                max_entry_money = settings.max_entry_money
-                leverage_effect = settings.leverage_effect
-
-                leverage_number = leverage_value if leverage_effect else 1
-                position = position_value.name
-                symbol = symbol_value.name
-
-                # set Margin Mode for a Pair in exchange
-                exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
-
-                # set Leverage for a Pair in exchange
-                exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
-                    'side': position
-                })
-
-                size_volume = max_entry_money / float(first_entry_value)
-                
-                # set order in exchange
-                print(first_entry_value, size_volume, "tp: ",first_tp_value,"sl: ", stopLoss_value, position)
-                order_data = exchange.create_order(
-                    symbol=symbol,
-                    type='limit',
-                    side='buy',
-                    amount=size_volume,
-                    price=first_entry_value,
-                    params={
-                        'positionSide': position,
-                        'takeProfit': {
-                            "type": "TAKE_PROFIT_MARKET",
-                            "quantity": size_volume,
-                            "stopPrice": first_tp_value,
-                            "price": first_tp_value,
-                            "workingType": "MARK_PRICE"
-                        },
-                        'stopLoss': {
-                            "type": "TAKE_PROFIT_MARKET",
-                            "quantity": size_volume,
-                            "stopPrice": stopLoss_value,
-                            "price": stopLoss_value,
-                            "workingType": "MARK_PRICE"
-                        }
-                    }
-                )
-                print(order_data)
-
-                
-
-                # save orderId in DB
-                newPredict.order_id = order_data['info']['orderId']
-                await newPredict.asave()
+            order_id = await self.createOrderInExchange(symbol=symbol_value.name, entry=first_entry_value,
+                                        leverage=leverage_value, side=side, type=OrderType.LIMIT.value, 
+                                        stoploss=stopLoss_value, takeProfit=first_tp_value, channel=post.channel,
+                                        position=position_value.name, isSpot=isSpot)
+            
+            # save orderId in DB
+            newPredict.order_id = order_id
+            await newPredict.asave()
 
             return newPredict
         except:
