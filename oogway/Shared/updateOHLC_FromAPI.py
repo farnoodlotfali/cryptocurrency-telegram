@@ -5,6 +5,7 @@ from Shared.types import MarketName
 from typing import Optional, Literal
 from bisect import bisect_left
 from datetime import datetime
+from Shared.Constant import EXCHANGE_LIMIT_OHLCV_DATA
 
 
 async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:MarketName, max_day_wait:int = 10):
@@ -14,10 +15,11 @@ async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:Mar
 
     keepOn = True
     time_interval = "1m" 
-    # 60 * 24 = 1440 minutes in a day
-    limit = 1440
+   
+    limit = EXCHANGE_LIMIT_OHLCV_DATA
     # 86400000 == milliseconds in a day
-    milliSecInDay = 86_400_000  
+    # milliSecInDay = 86_400_000  
+    milliSecInDay = EXCHANGE_LIMIT_OHLCV_DATA * 60 * 1000  
 
     # for better analyzing, we will decrease one minute form every times 
     # 60_000 == milliseconds in a minute
@@ -39,6 +41,7 @@ async def updateOHLC_FromAPI(start_timestamp:int, symbolName:str, marketName:Mar
             res = exchange.fetch_ohlcv(symbol=symbolName, timeframe=time_interval, limit=limit, since=start_timestamp, params={
                 'until': next_day
             })
+            
             allAPIdata += list(res) 
 
             # avoid more waiting

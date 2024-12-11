@@ -14,5 +14,5 @@ exchange: ccxt.Exchange = _exchange_class({
    'apiKey': _config["API_KEY"],
    'secret': _config["SECRET_KEY"],
    'enableRateLimit': True,
-   'rateLimit': 3000, # 3 seconds
+   # 'rateLimit': 3000, # 3 seconds
 })

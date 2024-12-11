@@ -279,10 +279,11 @@ def get_predicts_stat(request):
 
     gross_loss = predicts_result['gross_loss']
     loss_count = predicts_result['loss_count']
-    gross_profit = predicts_result['gross_profit']
+    gross_profit = predicts_result['gross_profit'] if predicts_result['gross_profit'] else 0
     win_count = predicts_result['win_count']
     total_count = predicts_result['total_count']
     total_gross = predicts_result['total_gross']
+
 
     loss_rate = loss_count/total_count if total_count else 0
     win_rate = win_count/total_count if total_count else 0

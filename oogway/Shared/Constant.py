@@ -57,6 +57,10 @@ class OrderType(Enum):
 # 60 percent
 MAX_PROFIT_VALUE = 60
 
+ # 60 * 24 = 1440 minutes in a day
+EXCHANGE_LIMIT_OHLCV_DATA = 1440
+# EXCHANGE_LIMIT_OHLCV_DATA = 1000
+
 
 # # for webPanel you can check SettingConfig model in PostAnalyzer\models.py
 SETTING_CONFIGS_VARIABLES = {

@@ -171,7 +171,24 @@ class AbsChannel(ABC):
             
             return order_data['id']
 
-
+     # cancel order in exchange
+   
+    async def cancelOrderEx(self, post:Post)-> bool:
+        if post is None or post.reply_to_msg_id is None:
+            return False
+        
+        try:
+            predict = await Predict.objects.select_related('symbol', 'market').aget(post__message_id=post.reply_to_msg_id)
+            res = exchange.cancel_order(symbol=predict.symbol.name, id=predict.order_id)
+            print(res)
+        
+            return True
+                
+        except Exception as e:
+            # print( e)
+            self.handleError(post, f"error in cancelOrderEx method, {str(e)}", post.channel.name)
+         
+            return False
      
     # ****************************************************************************************************************************
     # ************************************ Test message to find details for order(signal) ****************************************
