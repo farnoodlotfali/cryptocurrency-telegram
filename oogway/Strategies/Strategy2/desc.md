@@ -1,7 +1,6 @@
 # Strategy 2
 
 This strategy is a real-time strategy.
-This strategy actually does the same strategy as the channel itself.
 ### Initial Strategy
 ---
 money = is a mount of money that we want to use it in this strategy. Required
