@@ -396,6 +396,7 @@ def get_channels_stat(request):
             channel_predict_result[channel_id]['loss_rate'] = channel_predict_result[channel_id]['FAILED_GROUP']/entry['total_count']
 
     channel_predict_result_final = list(channel_predict_result.values())
+    channel_predict_result_final.sort(key=lambda x: x['win_rate'], reverse=True)
     print(channel_predict_result_final)
 
     # ********************************************************
