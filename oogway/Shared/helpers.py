@@ -140,3 +140,6 @@ def find_nearest_number_for_coienex_leverage(target):
     return min(arr, key=lambda x: abs(x - target))
 
 
+
+def calStoploss(entry:float, leverage:int, isShort:bool, max_percent_stoploss:float):
+    return entry*(1+(max_percent_stoploss/(100*leverage*(1 if isShort else -1)))) 
