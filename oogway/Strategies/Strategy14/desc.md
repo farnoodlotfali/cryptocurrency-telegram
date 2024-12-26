@@ -33,11 +33,11 @@ At first, we check all previous prediction\`s end time('end_date') according to 
 By passing the above conditions, we decrease current money by positionSize amount. we change the stoploss value according to "max_percent_stoploss" and first entry and predict position(LONG, SHORT) and also we change take-profit according to "max_percent_tp" and first entry and predict position(LONG, SHORT)value.The prediction is added to the active orders and pending orders.
 
 
-<img src="https://latex.codecogs.com/png.image?\dpi{110}\bg{white}&space;stop_loss=firstEntry\times\left(1&plus;\left(\frac{maxPercentStoploss}{100\times\text{leverage}\times(1)isShort(-1)}\right)\right)"  />
+<img src="https://latex.codecogs.com/png.image?\dpi{110}\bg{white}&space;stop_loss=firstEntry\times\left(1&plus;\left(\frac{maxPercentStoploss}{100\times\text{leverage}\times(-1)isShort(1)}\right)\right)"  />
 
 <br>
 
-<img src="https://latex.codecogs.com/png.image?\dpi{110}\bg{white}&space;tp=firstEntry\times\left(1&plus;\left(\frac{maxPercentTp}{100\times\text{leverage}\times(-1)isShort(1)}\right)\right)"  />
+<img src="https://latex.codecogs.com/png.image?\dpi{110}\bg{white}&space;tp=firstEntry\times\left(1&plus;\left(\frac{maxPercentTp}{100\times\text{leverage}\times(1)isShort(-1)}\right)\right)"  />
 
 
 Now it's time to evaluate the status. Wait until the start time('start_timestamp') reaches. Wait until the entry point is reached, if reached, it is removed from the pending list. Wait until the take-profit point or stoploss point hits.
