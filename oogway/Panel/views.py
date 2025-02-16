@@ -131,6 +131,14 @@ def channel_detail(request, channel_id):
                                                           "failed_predicts": failed_predicts,
                                                           })
 
+# delete post
+@login_required(login_url=LOGIN_PAGE_URL)
+def delete_post(request, post_id):
+    post = Post.objects.filter(id=post_id)
+    post.delete()
+    return redirect("Panel:predict")
+
+
 
 # posts list
 @login_required(login_url=LOGIN_PAGE_URL)

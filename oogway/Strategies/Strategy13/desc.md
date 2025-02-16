@@ -26,7 +26,7 @@ For every prediction, we will find the status using TOHLCV data and calculate th
 At first, we check all previous prediction\`s end time('end_date') according to current prediction\`s start time('start_timestamp'), if the start time is longer than the end time, we remove those predictions from the active orders list('active_orders') and the money from them is add to the current money.Then, we check the current money, if the current money is less than the positionSize, the prediction`s status is MISSED, adding to the missed orders and orders status list.
 
 
-By passing the above conditions, we decrease current money by positionSize amount. we change the stoploss value according to "max_percent_stoploss" and first entry and predict position(LONG, SHORT) and also we change take-profit according to "max_percent_tp" and first entry and predict position(LONG, SHORT)value.The prediction is added to the active orders and pending orders.
+By passing the above conditions, we decrease current money by positionSize amount.
 
 <mark>Then we reverse the predict. it means that we change the LONG to SHORT(SHORT to LONG), take-profit is updated to stoploss value and stoploss value is updated to take-profit value</mark>
 

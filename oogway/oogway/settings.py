@@ -91,6 +91,7 @@ WSGI_APPLICATION = 'oogway.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        # 'NAME': 'api-telethon2', 
         'NAME': 'api-telethon', 
         'USER': 'postgres',
         'PASSWORD': 'root',

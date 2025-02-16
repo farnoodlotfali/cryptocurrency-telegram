@@ -291,7 +291,8 @@ class FeyzianChannel(AbsChannel):
 
             
             return newPredict
-        except:
+        except Exception as e:
+            print(e)
             
             # error_msg.append(model_to_dict(post))
             return None

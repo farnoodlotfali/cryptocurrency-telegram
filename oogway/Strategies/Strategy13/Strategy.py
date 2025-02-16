@@ -21,7 +21,8 @@ def calStoploss(entry:float, leverage:int, isShort:bool, max_percent_stoploss:fl
 class Strategy13(AbsStrategy):
     strategy_name = 'strategy13'
 
-    async def backtest_with_money_strategy_13(self, predicts: list[Predict], showPrint: bool= False, positionSize: float= 100):
+    async def backtest_with_money_strategy_13(self, predicts: list[Predict], showPrint: bool= False,
+                                               positionSize: float= 100):
 
         
         for i, pr in enumerate(predicts):

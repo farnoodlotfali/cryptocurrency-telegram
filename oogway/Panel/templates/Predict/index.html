@@ -218,6 +218,13 @@
                                   class="ml-2"
                                 >
                                   <i class="fas fa-window-maximize text-yellow"></i>
+                                </a> 
+                                <a
+                                  href="{% url 'Panel:delete_post' predict.post.id %}"
+                                  title="Delete post"
+                                  class="ml-2"
+                                >
+                                  <i class="fas fa-trash text-red"></i>
                                 </a>
                                 <!-- {% if predict.status.name != 'FAILED'%}
                                   <a

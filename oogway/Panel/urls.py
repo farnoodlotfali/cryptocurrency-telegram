@@ -17,6 +17,7 @@ urlpatterns = [
 
     path("channels/", views.channel_list, name="channel_list"),
     path("channels/<int:channel_id>/", views.channel_detail, name="channel_detail"),
+    path("post/<int:post_id>/", views.delete_post, name="delete_post"),
     path("posts/", views.post_list, name="post_list"),
     path("", views.home, name="home"),
     path("symbol/", views.get_symbols, name="symbol"),

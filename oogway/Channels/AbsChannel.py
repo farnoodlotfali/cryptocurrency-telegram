@@ -23,6 +23,7 @@ from Shared.helpers import print_colored, find_nearest_number_for_coienex_levera
 from Shared.Constant import PositionSideValues, MarketValues, MAX_PROFIT_VALUE, OrderSide, OrderType, MarginModeValues
 import time
 from Shared.Exchange import exchange
+from Shared.CreateOrderInExchanges import createOrderInCoinEx, createOrderInXt
 
 # ****************************************************************************************************************************
 
@@ -113,63 +114,22 @@ class AbsChannel(ABC):
 
             leverage_number = leverage if leverage_effect else 1
 
-            # set Margin Mode for a Pair in exchange
-            # try:
-            #    await exchange.set_margin_mode(marginMode=MarginModeValues.ISOLATED.value,symbol=symbol)
-            # except Exception as e:
-            #     print(str(e))
-
-            # set Leverage for a Pair in exchange
-            # exchange.set_leverage(leverage=leverage_number, symbol=symbol ,params={
-            #     'positionSide': position
-            # })
+            
             exchange.enableRateLimit = False
             exchange.rateLimit = 1000
-            # exchange.verbose = True
 
-            exchange.set_leverage(
-                leverage=find_nearest_number_for_coienex_leverage(leverage_number),
-                symbol=symbol,
-                params={
-                    'marginMode': MarginModeValues.ISOLATED.value
-                }
-            )
-
-            size_volume = max_entry_money / float(entry)
+            options = {
+                'coinex': createOrderInCoinEx,
+                'xt': createOrderInXt,
+            }
             
-            # set order in exchange
-            print(entry, size_volume, "tp: ",takeProfit,"sl: ", stoploss, position)
-            order_data = exchange.create_order(
-                symbol=symbol,
-                type=type,
-                side=side,
-                amount=size_volume,
-                price=entry,
-                params={
-                    'positionSide': position,
-                    'takeProfit': {
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": size_volume,
-                        "stopPrice": takeProfit,
-                        "price": takeProfit,
-                        "workingType": "MARK_PRICE"
-                    },
-                    'stopLoss': {
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": size_volume,
-                        "stopPrice": stoploss,
-                        "price": stoploss,
-                        "workingType": "MARK_PRICE"
-                    }
-                }
-            )
-            print(order_data)
+            orderId = options[exchange.id](symbol, entry,leverage_number, side, type, stoploss, takeProfit, position, max_entry_money)
 
             exchange.enableRateLimit = True
             exchange.rateLimit = 3000
             # exchange.verbose = False
             
-            return order_data['id']
+            return orderId
 
      # cancel order in exchange
    
